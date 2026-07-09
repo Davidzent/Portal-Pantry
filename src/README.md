@@ -14,7 +14,7 @@ A live demo by [David Guijosa](https://www.zntsns.com) · part of the
 
 </div>
 
-![Portal Pantry storefront](./docs/storefront.jpg)
+![Portal Pantry storefront](../../docs/portal-pantry/storefront.jpg)
 
 Portal Pantry is a full food-delivery front end with a **production-shaped
 architecture** — except the entire backend is mocked in the browser. It has two
@@ -52,12 +52,12 @@ build step beyond Vite; everything persists to `localStorage`.
 
 <table>
   <tr>
-    <td width="50%"><img src="./docs/restaurant.jpg" alt="Restaurant menu"><p align="center"><em>Restaurant menu, photos & reviews</em></p></td>
-    <td width="50%"><img src="./docs/owner-orders.jpg" alt="Owner orders"><p align="center"><em>Owner dashboard — order queue</em></p></td>
+    <td width="50%"><img src="../../docs/portal-pantry/restaurant.jpg" alt="Restaurant menu"><p align="center"><em>Restaurant menu, photos & reviews</em></p></td>
+    <td width="50%"><img src="../../docs/portal-pantry/owner-orders.jpg" alt="Owner orders"><p align="center"><em>Owner dashboard — order queue</em></p></td>
   </tr>
   <tr>
-    <td width="50%"><img src="./docs/owner-money.jpg" alt="Owner finances"><p align="center"><em>Owner dashboard — money</em></p></td>
-    <td width="50%"><img src="./docs/storefront.jpg" alt="Storefront"><p align="center"><em>Storefront</em></p></td>
+    <td width="50%"><img src="../../docs/portal-pantry/owner-money.jpg" alt="Owner finances"><p align="center"><em>Owner dashboard — money</em></p></td>
+    <td width="50%"><img src="../../docs/portal-pantry/storefront.jpg" alt="Storefront"><p align="center"><em>Storefront</em></p></td>
   </tr>
 </table>
 
