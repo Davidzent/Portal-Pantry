@@ -120,3 +120,16 @@ npm run dev
 
 **Try the owner side:** sign in as `owner@neutrino.pp` (any 4+ char password),
 or register a new owner account to create your own kitchen from scratch.
+
+## Run it against the real backend
+
+The same app also runs against a real Node.js + Express + SQLite backend that
+implements this exact API contract: [`portal-pantry-back`](../portal-pantry-back).
+Start that server (`npm run dev`, port 4000), then create a `.env.local` here:
+
+```bash
+VITE_API_URL=http://localhost:4000
+```
+
+The API client switches from the in-browser mock to real `fetch` — nothing
+else changes. Delete `.env.local` to go back to the serverless demo.

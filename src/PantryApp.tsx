@@ -433,7 +433,7 @@ export default function PantryApp() {
           dimensions
         </p>
         <p className="pp-footer-credit">
-          A demo by <a href="/portfolio/">David Guijosa</a> — no real food, portals, or
+          A demo by <a href="/">David Guijosa</a> — no real food, portals, or
           Kevins were harmed
         </p>
       </footer>

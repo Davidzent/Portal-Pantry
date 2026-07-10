@@ -13,8 +13,8 @@ const STEPS = [
   "Order beamed to the kitchen",
   "Chef is cooking it in three timelines at once",
   "Warming up the portal (do not taunt the portal)",
-  "Courier has entered the wormhole",
-  "Delivered to your dimension!",
+  "Courier on standby at the wormhole",
+  "Order placed in your timeline!",
 ];
 
 export default function CheckoutModal({
@@ -71,11 +71,11 @@ export default function CheckoutModal({
               <span className="pp-delivered-emoji" aria-hidden="true">
                 <Icon name="check" size={46} />
               </span>
-              <h2 className="pp-checkout-title">Delivered!</h2>
+              <h2 className="pp-checkout-title">Order placed!</h2>
               <p className="pp-checkout-sub">
                 {total}
-                {CURRENCY} well spent. If this isn't the order you placed,
-                a version of you is very happy right now.
+                {CURRENCY} well spent. The kitchen is on it — the portal
+                opens the moment your food is ready.
               </p>
               <div className="pp-checkout-actions">
                 <button
