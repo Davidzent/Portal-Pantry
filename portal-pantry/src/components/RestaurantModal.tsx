@@ -10,15 +10,12 @@ import type { CartEntry } from "../PantryApp";
 interface RestaurantModalProps {
   restaurant: Restaurant;
   cart: CartEntry[];
-  /** Owners browse but can't order. */
   canOrder: boolean;
-  /** Signed-in user, used to gate the review form. */
   user: User | null;
   onAdd: (restaurant: Restaurant, item: MenuItem) => void;
   onChangeQty: (key: string, delta: number) => void;
   onClose: () => void;
   onOpenCart: () => void;
-  /** Called after a review posts, so the catalog rating can refresh. */
   onReviewAdded: () => void;
 }
 
@@ -121,14 +118,12 @@ export default function RestaurantModal({
 }: RestaurantModalProps) {
   const closeRef = useRef<HTMLButtonElement>(null);
   const [reviews, setReviews] = useState<Review[] | null>(null);
-  // The dish shown enlarged in the lightbox, if any.
   const [zoom, setZoom] = useState<MenuItem | null>(null);
   const zoomRef = useRef<MenuItem | null>(null);
   zoomRef.current = zoom;
 
   useEffect(() => {
     closeRef.current?.focus();
-    // Escape closes the lightbox first, then the whole modal.
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== "Escape") return;
       if (zoomRef.current) setZoom(null);
@@ -142,7 +137,6 @@ export default function RestaurantModal({
     };
   }, [onClose]);
 
-  // Reviews come from the backend (GET /restaurants/:id/reviews).
   const loadReviews = useCallback(async () => {
     try {
       setReviews(await getRestaurantReviews(restaurant.id));
@@ -372,7 +366,6 @@ export default function RestaurantModal({
         </div>
       </div>
 
-      {/* Dish lightbox — tap a photo to see it big. */}
       {zoom && zoomUrl && (
         <div
           className="pp-lightbox-backdrop"

@@ -1,11 +1,3 @@
-/**
- * Client-side image processing for owner uploads. Downscales a picked
- * File to a max edge and re-encodes it as a compact WebP data URL — the
- * same treatment the bundled art got, so uploads stay small enough to
- * live in the mock database (localStorage). A dark backdrop is painted
- * first so transparent PNGs match Portal Pantry's theme.
- */
-
 const BACKDROP = "#0b0b12";
 
 export async function fileToWebpDataUrl(
@@ -31,6 +23,5 @@ export async function fileToWebpDataUrl(
   ctx.drawImage(bitmap, 0, 0, width, height);
   bitmap.close();
 
-  // Prefer WebP; browsers that can't encode it fall back to PNG automatically.
   return canvas.toDataURL("image/webp", quality);
 }

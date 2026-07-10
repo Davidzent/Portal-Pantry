@@ -38,7 +38,6 @@ export default function OrderHistoryModal({ onClose }: { onClose: () => void }) 
     };
   }, [onClose]);
 
-  // Fetch the history from the (mock) API on open.
   useEffect(() => {
     let mounted = true;
     getOrders()

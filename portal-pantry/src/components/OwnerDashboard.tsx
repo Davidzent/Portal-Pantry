@@ -70,9 +70,6 @@ function Stars({ rating }: { rating: number }) {
   );
 }
 
-/* ── Menu tab ── */
-
-/** Picks an image, compresses it to a WebP data URL, and hands it up. */
 function PhotoButton({
   maxEdge,
   label,
@@ -641,8 +638,6 @@ function MenuTab({
   );
 }
 
-/* ── Orders tab ── */
-
 function OrderCard({
   order,
   onDelivered,
@@ -746,8 +741,6 @@ function OrdersTab({
   );
 }
 
-/* ── Money tab ── */
-
 function MoneyTab({ finance }: { finance: Finance }) {
   return (
     <div className="pp-dash-panel">
@@ -800,8 +793,6 @@ function MoneyTab({ finance }: { finance: Finance }) {
     </div>
   );
 }
-
-/* ── Reviews tab ── */
 
 function ReviewCard({
   review,
@@ -934,13 +925,10 @@ function ReviewsTab({
   );
 }
 
-/* ── Dashboard shell ── */
-
 interface OwnerDashboardProps {
   user: User;
   onSignOut: () => void;
   onViewStorefront: () => void;
-  /** Re-fetch the public catalog so menu edits show for customers too. */
   onCatalogChanged: () => Promise<void> | void;
 }
 
@@ -981,13 +969,11 @@ export default function OwnerDashboard({
     );
   }, [loadStore, loadOrders, loadFinance, loadReviews]);
 
-  // Menu edits ripple out to the storefront and to finance/orders labels.
   const afterMenuChange = useCallback(async () => {
     await loadStore();
     void onCatalogChanged();
   }, [loadStore, onCatalogChanged]);
 
-  // Delivering an order changes both the order book and the money.
   const afterOrderChange = useCallback(async () => {
     await Promise.all([loadOrders(), loadFinance()]);
   }, [loadOrders, loadFinance]);

@@ -1,4 +1,3 @@
-/** Swirling green portal — the Portal Pantry brand mark. */
 export function PortalMark({ size = 34 }: { size?: number }) {
   return (
     <svg

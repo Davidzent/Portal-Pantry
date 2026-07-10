@@ -1,10 +1,3 @@
-/**
- * The mock backend. A tiny router that behaves like a real HTTP API:
- * status codes, bearer-token sessions, ownership checks, and validation
- * — all reading and writing the mock database. The API client is the
- * only caller; swap it for a real server and nothing else changes.
- */
-
 import {
   getDb,
   newId,
@@ -33,11 +26,8 @@ interface MockResponse {
   data: unknown;
 }
 
-/** Platform economics — what Portal Pantry skims off gross sales. */
 const PLATFORM_FEE_RATE = 0.15;
 const REALITY_TAX_RATE = 0.08;
-
-/* ── DTO mappers (DB rows → API payloads) ── */
 
 function userDto(db: Database, user: DbUser) {
   const kitchen = user.restaurantId
@@ -71,7 +61,6 @@ function orderDto(order: DbOrder) {
   return dto;
 }
 
-/** An order as the owner sees it: only their items, plus their cut. */
 function ownerOrderDto(order: DbOrder, restaurantId: string) {
   const items = order.items.filter((i) => i.restaurantId === restaurantId);
   const subtotal = items.reduce((n, i) => n + i.price * i.qty, 0);
@@ -90,8 +79,6 @@ function reviewDto(review: DbReview) {
   const { restaurantId: _restaurantId, ...dto } = review;
   return dto;
 }
-
-/* ── Auth helpers ── */
 
 function requireAuth(db: Database, token: string | null): DbUser {
   const session = token
@@ -114,8 +101,6 @@ function requireOwner(db: Database, token: string | null): DbUser {
   return user;
 }
 
-/* ── Handlers ── */
-
 interface LoginBody {
   email?: string;
   password?: string;
@@ -135,7 +120,6 @@ function handleLogin(db: Database, raw: unknown): MockResponse {
     );
   }
 
-  // The database is the source of truth: you must have an account.
   const user = db.users.find((u) => u.email === email);
   if (!user) {
     throw new HttpError(
@@ -195,7 +179,6 @@ function handleRegister(db: Database, raw: unknown): MockResponse {
 interface StorePatchBody {
   name?: string;
   tagline?: string;
-  emoji?: string;
   category?: string;
   dimension?: string;
   image?: string;
@@ -216,9 +199,6 @@ function handleUpdateStore(db: Database, token: string | null, raw: unknown): Mo
   }
   if (body.tagline !== undefined) {
     restaurant.tagline = body.tagline.trim();
-  }
-  if (body.emoji !== undefined && body.emoji.trim()) {
-    restaurant.emoji = body.emoji.trim();
   }
   if (body.category !== undefined && body.category.trim()) {
     restaurant.category = body.category.trim();
@@ -296,7 +276,6 @@ interface NewMenuItemBody {
   desc?: string;
   price?: number;
   prepMinutes?: number;
-  emoji?: string;
   image?: string;
 }
 
@@ -320,7 +299,6 @@ function handleCreateMenuItem(
     name: body.name!.trim(),
     desc: (body.desc ?? "").trim(),
     price: body.price!,
-    emoji: (body.emoji ?? "").trim(),
     delisted: false,
     prepMinutes: Number.isFinite(prep) && (prep ?? 0) > 0 ? Math.round(prep!) : 10,
     image: body.image || undefined,
@@ -338,7 +316,6 @@ interface NewOrderBody {
 
 function handleCreateOrder(db: Database, token: string | null, raw: unknown): MockResponse {
   const user = requireAuth(db, token);
-  // Owners run kitchens; they don't order from the storefront.
   if (user.role === "owner") {
     throw new HttpError(
       403,
@@ -357,7 +334,6 @@ function handleCreateOrder(db: Database, token: string | null, raw: unknown): Mo
     userId: user.id,
     customerName: user.name,
     placedAt: new Date().toISOString(),
-    // New orders enter the kitchen's queue as pending.
     status: "pending",
     dimension: body.dimension ?? user.dimension,
     items: body.items,
@@ -410,7 +386,6 @@ function computeFinance(db: Database, restaurantId: string) {
       pending += sub;
       pendingOrders += 1;
     } else {
-      // wrong-dimension / lost → refunded to the customer.
       refunded += sub;
     }
   }
@@ -459,7 +434,6 @@ function handleReplyReview(
   return { status: 200, data: { review: reviewDto(review) } };
 }
 
-/** A restaurant's rating is the average of its reviews (1 decimal). */
 function recomputeRating(db: Database, restaurantId: string): void {
   const reviews = db.reviews.filter((r) => r.restaurantId === restaurantId);
   const restaurant = db.restaurants.find((r) => r.id === restaurantId);
@@ -511,8 +485,6 @@ function handleAddReview(
   return { status: 201, data: { review: reviewDto(review) } };
 }
 
-/* ── Router ── */
-
 export function handleRequest(
   method: string,
   path: string,
@@ -547,7 +519,6 @@ export function handleRequest(
     };
   }
 
-  // Public reviews for a restaurant, newest first.
   if (method === "GET" && path.startsWith("/restaurants/") && path.endsWith("/reviews")) {
     const id = path.slice("/restaurants/".length, -"/reviews".length);
     const reviews = db.reviews
@@ -557,7 +528,6 @@ export function handleRequest(
     return { status: 200, data: { reviews } };
   }
 
-  // A customer posts a review for a restaurant.
   if (method === "POST" && path.startsWith("/restaurants/") && path.endsWith("/reviews")) {
     const id = path.slice("/restaurants/".length, -"/reviews".length);
     return handleAddReview(db, token, id, body);

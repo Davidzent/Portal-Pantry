@@ -39,7 +39,6 @@ export type IconName =
 
 interface IconDef {
   node: ReactElement;
-  /** Brand marks are solid fills; UI icons are strokes. */
   filled?: boolean;
 }
 

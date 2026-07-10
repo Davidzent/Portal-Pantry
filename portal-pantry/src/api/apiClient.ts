@@ -1,22 +1,8 @@
-/**
- * The app's HTTP client. Every feature module calls `api()` exactly the
- * way it would call fetch() against a real backend — method, path, JSON
- * body, bearer token from storage — and gets typed data or an ApiError
- * with a status code.
- *
- * Two interchangeable transports, same contract:
- *  - With `VITE_API_URL` set (see `.env.local`), requests go over real
- *    HTTP to the Node backend in `../portal-pantry-back`.
- *  - Without it, requests route to the in-browser mock server, so the
- *    static demo keeps working with no server at all.
- */
-
 import { handleRequest, HttpError } from "../server";
 
 
 export type HttpMethod = "GET" | "POST" | "PATCH" | "DELETE";
 
-/** Mirrors an HTTP error response so call sites can branch on status. */
 export class ApiError extends Error {
   status: number;
 
@@ -41,22 +27,18 @@ export const tokenStore = {
     try {
       localStorage.setItem(TOKEN_KEY, token);
     } catch {
-      // storage unavailable — the session lives for this tab only
     }
   },
   clear(): void {
     try {
       localStorage.removeItem(TOKEN_KEY);
     } catch {
-      // nothing to clear
     }
   },
 };
 
-/** Real backend base URL (e.g. http://localhost:4000), set via .env.local. */
 const API_URL = (import.meta.env.VITE_API_URL as string | undefined)?.replace(/\/+$/, "");
 
-/** Simulated network latency for the in-browser mock, with a little jitter. */
 const latency = () => 320 + Math.random() * 380;
 
 async function mockTransport<T>(method: HttpMethod, path: string, body?: unknown): Promise<T> {
