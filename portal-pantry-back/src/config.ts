@@ -1,7 +1,3 @@
-/**
- * Environment-driven configuration, validated up front with zod so a
- * typo'd variable fails the boot loudly instead of misbehaving quietly.
- */
 import { z } from "zod";
 
 const envSchema = z.object({
@@ -25,7 +21,6 @@ export interface AppConfig {
   port: number;
   host: string;
   databasePath: string;
-  /** Allowed browser origins, or "*" to disable the origin check. */
   corsOrigins: string[] | "*";
   sessionTtlMs: number;
   logLevel: string;

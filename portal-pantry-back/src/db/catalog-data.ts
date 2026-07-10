@@ -1,10 +1,3 @@
-/**
- * The launch catalog — ported verbatim from the frontend's `src/data.ts`
- * so a freshly seeded database serves exactly the storefront the demo
- * shipped with. `image` values are art keys the client resolves to its
- * bundled assets. Everything is fictional; any resemblance to your
- * dimension is a scheduling coincidence.
- */
 
 export interface SeedMenuItem {
   id: string;
@@ -30,12 +23,10 @@ export interface SeedRestaurant {
   items: SeedMenuItem[];
 }
 
-/** Sensible default prep time when the catalog doesn't specify one. */
 export function defaultPrepMinutes(price: number): number {
   return Math.max(5, Math.round(price / 3));
 }
 
-//AI Starting data
 export const seedCatalog: SeedRestaurant[] = [
   {
     id: "gargantua",

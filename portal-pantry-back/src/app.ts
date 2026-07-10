@@ -1,8 +1,3 @@
-/**
- * The Express app, assembled from explicit dependencies (db, config,
- * optional logger) so tests can build one against an in-memory database
- * with zero environment coupling.
- */
 import express, { type Express } from "express";
 import cors from "cors";
 import helmet from "helmet";
@@ -10,6 +5,8 @@ import { pinoHttp } from "pino-http";
 import type { AppConfig } from "./config.js";
 import type { Db } from "./db/database.js";
 import type { Logger } from "./logger.js";
+import { createAuthRouter } from "./routes/auth-routes.js";
+
 
 export interface AppDeps {
   db: Db;
@@ -36,17 +33,18 @@ export function createApp({ db, config, logger }: AppDeps): Express {
     app.use(
       pinoHttp({
         logger,
-        // Bearer tokens must never end up in log files.
         redact: ["req.headers.authorization"],
       }),
     );
   }
-  // 2 MB leaves room for the client's compact WebP data-URL uploads.
   app.use(express.json({ limit: "2mb" }));
 
   app.get("/health", (_req, res) => {
     res.json({ ok: true, service: "portal-pantry-api", uptime: process.uptime() });
   });
+
+  app.use("/auth", createAuthRouter(db, config));
+
 
 
   return app;

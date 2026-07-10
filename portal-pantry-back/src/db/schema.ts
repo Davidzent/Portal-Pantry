@@ -1,12 +1,3 @@
-/**
- * SQLite schema. Normalized the way a Postgres backend would be:
- * restaurants ← menu_items, users ← sessions/orders, orders ← order_items
- * (line items snapshot name/price at purchase so history survives menu
- * edits), restaurants ← reviews.
- * This will eventually change to add more details like store phone number
- * employees accounts, that will have little authorization and manager accounts
- * 
- */
 export const SCHEMA_SQL = `
 CREATE TABLE IF NOT EXISTS restaurants (
   id         TEXT PRIMARY KEY,
@@ -33,7 +24,6 @@ CREATE TABLE IF NOT EXISTS users (
   member_since  TEXT NOT NULL,
   role          TEXT NOT NULL CHECK (role IN ('customer', 'owner')),
   restaurant_id TEXT REFERENCES restaurants(id),
-  -- NULL marks a seeded demo account: any 4+ character password signs in.
   password_hash TEXT,
   created_at    TEXT NOT NULL
 );

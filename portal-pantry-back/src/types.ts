@@ -1,8 +1,3 @@
-/**
- * API payload types (DTOs) — mirrors of the shapes the Portal Pantry
- * frontend declares in its `src/api/*.ts` SDK modules. If a field moves
- * here, it moves there.
- */
 
 export type UserRole = "customer" | "owner";
 
@@ -14,9 +9,7 @@ export interface UserDto {
   dimension: string;
   memberSince: string;
   role: UserRole;
-  /** Present on owner accounts — the kitchen this account manages. */
   restaurantId?: string;
-  /** Joined in for convenience. */
   restaurantName?: string;
 }
 
@@ -52,11 +45,9 @@ export interface OrderItemDto {
   name: string;
   qty: number;
   price: number;
-  /** Restaurant display name, snapshotted at purchase time. */
   restaurant: string;
 }
 
-/** An order as the customer sees it — every line item, grand total. */
 export interface OrderDto {
   id: string;
   customerName: string;
@@ -67,7 +58,6 @@ export interface OrderDto {
   total: number;
 }
 
-/** An order as a kitchen sees it — only their items and their cut. */
 export interface OwnerOrderDto {
   id: string;
   customerName: string;

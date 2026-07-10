@@ -1,9 +1,3 @@
-/**
- * Database bootstrap on Node's built-in SQLite driver (node:sqlite) —
- * a real SQL database with zero native dependencies. The synchronous
- * API is the recommended way to use SQLite from Node: statements run
- * in microseconds and never queue behind the event loop.
- */
 import { mkdirSync } from "node:fs";
 import { dirname } from "node:path";
 import { DatabaseSync } from "node:sqlite";
@@ -23,7 +17,6 @@ export function openDatabase(path: string): Db {
   return db;
 }
 
-/** Runs `fn` atomically — BEGIN/COMMIT with ROLLBACK on throw. */
 export function withTransaction<T>(db: Db, fn: () => T): T {
   db.exec("BEGIN");
   try {
@@ -36,7 +29,6 @@ export function withTransaction<T>(db: Db, fn: () => T): T {
   }
 }
 
-/* ── Row shapes (snake_case, exactly as SELECTed :D) ── */
 
 export interface UserRow {
   id: string;
