@@ -117,6 +117,7 @@ export const restaurants: Restaurant[] = [
     time: "10–20 min",
     fee: 8,
     hue: 45,
+    image: "restaurant_quantum_quesadillas",
     items: [
       {
         id: "qq1",
@@ -192,6 +193,7 @@ export const restaurants: Restaurant[] = [
         desc: "Very small. VERY heavy. One per customer, per lifetime.",
         price: 12,
         emoji: "🥚",
+        image: "neutron_star_egg",
       },
     ],
   },
@@ -248,6 +250,7 @@ export const restaurants: Restaurant[] = [
     time: "25–40 min",
     fee: 0,
     hue: 280,
+    image: "restaurant_grandma_zorps",
     items: [
       {
         id: "gz1",
@@ -332,6 +335,7 @@ export const restaurants: Restaurant[] = [
     time: "12–22 min",
     fee: 4,
     hue: 10,
+    image: "restaurant_the_secret_sauce_shack",
     items: [
       {
         id: "ss1",
@@ -409,6 +413,7 @@ export const restaurants: Restaurant[] = [
     time: "15–25 min",
     fee: 0,
     hue: 50,
+    image:"restaurant_wormhole_waffle",
     items: [
       {
         id: "ww1",

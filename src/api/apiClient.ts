@@ -2,13 +2,8 @@
  * The app's HTTP client. Every feature module calls `api()` exactly the
  * way it would call fetch() against a real backend — method, path, JSON
  * body, bearer token from storage — and gets typed data or an ApiError
- * with a status code.
- *
- * Two interchangeable transports, same contract:
- *  - With `VITE_API_URL` set (see `.env.local`), requests go over real
- *    HTTP to the Node backend in `../portal-pantry-back`.
- *  - Without it, requests route to the in-browser mock server, so the
- *    static demo keeps working with no server at all.
+ * with a status code. The transport currently routes to the in-browser
+ * mock server; point it at a real base URL and the app ships as-is.
  */
 
 import { handleRequest, HttpError } from "../server";
@@ -52,13 +47,14 @@ export const tokenStore = {
   },
 };
 
-/** Real backend base URL (e.g. http://localhost:4000), set via .env.local. */
-const API_URL = (import.meta.env.VITE_API_URL as string | undefined)?.replace(/\/+$/, "");
-
-/** Simulated network latency for the in-browser mock, with a little jitter. */
+/** Simulated network latency with a little jitter. */
 const latency = () => 320 + Math.random() * 380;
 
-async function mockTransport<T>(method: HttpMethod, path: string, body?: unknown): Promise<T> {
+export async function api<T>(
+  method: HttpMethod,
+  path: string,
+  body?: unknown,
+): Promise<T> {
   await new Promise((resolve) => setTimeout(resolve, latency()));
   try {
     const response = handleRequest(method, path, body, tokenStore.get());
@@ -69,35 +65,4 @@ async function mockTransport<T>(method: HttpMethod, path: string, body?: unknown
     }
     throw new ApiError(500, "The backend fell into a wormhole. Try again.");
   }
-}
-
-async function httpTransport<T>(method: HttpMethod, path: string, body?: unknown): Promise<T> {
-  const token = tokenStore.get();
-  let response: Response;
-  try {
-    response = await fetch(`${API_URL}${path}`, {
-      method,
-      headers: {
-        ...(body !== undefined ? { "Content-Type": "application/json" } : {}),
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      },
-      body: body !== undefined ? JSON.stringify(body) : undefined,
-    });
-  } catch {
-    throw new ApiError(503, "Can't reach the backend — is the API server running?");
-  }
-  const payload: unknown = await response.json().catch(() => null);
-  if (!response.ok) {
-    const message =
-      (payload as { error?: { message?: string } } | null)?.error?.message ??
-      `Request failed with status ${response.status}.`;
-    throw new ApiError(response.status, message);
-  }
-  return payload as T;
-}
-
-export async function api<T>(method: HttpMethod, path: string, body?: unknown): Promise<T> {
-  return API_URL
-    ? httpTransport<T>(method, path, body)
-    : mockTransport<T>(method, path, body);
 }
