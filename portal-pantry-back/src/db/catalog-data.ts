@@ -11,7 +11,6 @@ export interface SeedMenuItem {
   name: string;
   desc: string;
   price: number;
-  emoji: string;
   prepMinutes?: number;
   image?: string;
 }
@@ -19,7 +18,6 @@ export interface SeedMenuItem {
 export interface SeedRestaurant {
   id: string;
   name: string;
-  emoji: string;
   tagline: string;
   category: string;
   dimension: string;
@@ -42,7 +40,7 @@ export const seedCatalog: SeedRestaurant[] = [
   {
     id: "gargantua",
     name: "Greasy Gargantua",
-    emoji: "🍔",
+    
     tagline: "Burgers bigger than your timeline.",
     category: "Human food",
     dimension: "C-131",
@@ -53,16 +51,16 @@ export const seedCatalog: SeedRestaurant[] = [
     promoted: true,
     image: "restaurant_greasy_gargantua",
     items: [
-      { id: "gg1", name: "Event Horizon Burger", desc: "Triple patty so dense not even the sauce escapes. Napkin singularity included.", price: 45, emoji: "🍔" },
-      { id: "gg2", name: "Singularity Fries", desc: "Infinitely crispy. Finite portion (legally required disclosure).", price: 18, emoji: "🍟" },
-      { id: "gg3", name: "Dark Matter Shake", desc: "We don't know what's in it. Neither does science. 5 stars.", price: 22, emoji: "🥤" },
-      { id: "gg4", name: "Baby Universe Nuggets", desc: "Each nugget contains a tiny universe. Dip responsibly.", price: 26, emoji: "🍗" },
+      { id: "gg1", name: "Event Horizon Burger", desc: "Triple patty so dense not even the sauce escapes. Napkin singularity included.", price: 45 },
+      { id: "gg2", name: "Singularity Fries", desc: "Infinitely crispy. Finite portion (legally required disclosure).", price: 18 },
+      { id: "gg3", name: "Dark Matter Shake", desc: "We don't know what's in it. Neither does science. 5 stars.", price: 22 },
+      { id: "gg4", name: "Baby Universe Nuggets", desc: "Each nugget contains a tiny universe. Dip responsibly.", price: 26 },
     ],
   },
   {
     id: "quantum-q",
     name: "Quantum Quesadillas",
-    emoji: "🌮",
+    
     tagline: "Simultaneously cheesy and not. You decide by observing.",
     category: "Human food",
     dimension: "Ω-77",
@@ -71,16 +69,16 @@ export const seedCatalog: SeedRestaurant[] = [
     fee: 8,
     hue: 45,
     items: [
-      { id: "qq1", name: "Schrödinger Quesadilla", desc: "Both folded and unfolded until you open the box.", price: 32, emoji: "🫓" },
-      { id: "qq2", name: "Entangled Tacos (pair)", desc: "Bite one and the other one flinches. Sold in pairs, obviously.", price: 38, emoji: "🌮" },
-      { id: "qq3", name: "Probability Salsa", desc: "70% mild, 30% regret.", price: 9, emoji: "🌶️" },
-      { id: "qq4", name: "Waveform Guac", desc: "Collapses if you look at it too long. Eat fast.", price: 14, emoji: "🥑" },
+      { id: "qq1", name: "Schrödinger Quesadilla", desc: "Both folded and unfolded until you open the box.", price: 32 },
+      { id: "qq2", name: "Entangled Tacos (pair)", desc: "Bite one and the other one flinches. Sold in pairs, obviously.", price: 38 },
+      { id: "qq3", name: "Probability Salsa", desc: "70% mild, 30% regret.", price: 9},
+      { id: "qq4", name: "Waveform Guac", desc: "Collapses if you look at it too long. Eat fast.", price: 14 },
     ],
   },
   {
     id: "neutrino",
     name: "Neutrino Noodles",
-    emoji: "🍜",
+    
     tagline: "Ramen so light it phases through you. Zero calories, zero mercy.",
     category: "Alien delicacies",
     dimension: "Ω-77",
@@ -91,16 +89,16 @@ export const seedCatalog: SeedRestaurant[] = [
     promoted: true,
     image: "restaurant_neutrino_noodles",
     items: [
-      { id: "nn1", name: "Phase-Through Pho", desc: "Passes through matter, lingers in memory.", price: 29, emoji: "🍜", image: "phase_through_pho" },
-      { id: "nn2", name: "Zero-G Gyoza", desc: "five dumplings orbiting a mutual dipping sauce.", price: 21, emoji: "🥟", image: "zero_g_gyoza" },
-      { id: "nn3", name: "Antimatter Broth Refill", desc: "Cancels out the first bowl. Somehow still filling.", price: 3, emoji: "🫕", image: "antimatter_broth_refill" },
-      { id: "nn4", name: "Neutron Star Egg", desc: "Very small. VERY heavy. One per customer, per lifetime.", price: 12, emoji: "🥚" },
+      { id: "nn1", name: "Phase-Through Pho", desc: "Passes through matter, lingers in memory.", price: 29,  image: "phase_through_pho" },
+      { id: "nn2", name: "Zero-G Gyoza", desc: "five dumplings orbiting a mutual dipping sauce.", price: 21,  image: "zero_g_gyoza" },
+      { id: "nn3", name: "Antimatter Broth Refill", desc: "Cancels out the first bowl. Somehow still filling.", price: 3,  image: "antimatter_broth_refill" },
+      { id: "nn4", name: "Neutron Star Egg", desc: "Very small. VERY heavy. One per customer, per lifetime.", price: 12 },
     ],
   },
   {
     id: "brined-one",
     name: "The Brined One",
-    emoji: "🥒",
+    
     tagline: "The owner turned himself into a pickle bar. Please stop asking why.",
     category: "Questionable",
     dimension: "Pickle-9",
@@ -109,16 +107,16 @@ export const seedCatalog: SeedRestaurant[] = [
     fee: 6,
     hue: 80,
     items: [
-      { id: "bo1", name: "Pickle Platter Supreme", desc: "Pickled pickles in pickle reduction. Pickle on the side.", price: 24, emoji: "🥒" },
-      { id: "bo2", name: "Brine Smoothie", desc: "Electrolytes from a dimension where that word means something else.", price: 11, emoji: "🧃" },
-      { id: "bo3", name: "Fermented Mystery Jar", desc: "It was labeled once. The label left.", price: 17, emoji: "🫙" },
-      { id: "bo4", name: "Dill-emma Dog", desc: "A hot dog that's 60% pickle. The other 40% is also pickle.", price: 19, emoji: "🌭" },
+      { id: "bo1", name: "Pickle Platter Supreme", desc: "Pickled pickles in pickle reduction. Pickle on the side.", price: 24 },
+      { id: "bo2", name: "Brine Smoothie", desc: "Electrolytes from a dimension where that word means something else.", price: 11 },
+      { id: "bo3", name: "Fermented Mystery Jar", desc: "It was labeled once. The label left.", price: 17 },
+      { id: "bo4", name: "Dill-emma Dog", desc: "A hot dog that's 60% pickle. The other 40% is also pickle.", price: 19 },
     ],
   },
   {
     id: "zorp",
     name: "Grandma Zorp's",
-    emoji: "👽",
+    
     tagline: "Home cooking, just like grandma used to synthesize.",
     category: "Alien delicacies",
     dimension: "B-612",
@@ -127,16 +125,16 @@ export const seedCatalog: SeedRestaurant[] = [
     fee: 0,
     hue: 280,
     items: [
-      { id: "gz1", name: "Slow-Cooked Glorbo", desc: "Basted for three lunar cycles in love and enzymes.", price: 41, emoji: "🍲" },
-      { id: "gz2", name: "Tentacle Pot Pie", desc: "It hugs back. That's the flaky crust talking.", price: 33, emoji: "🥧" },
-      { id: "gz3", name: "Zorp Family Dumplings", desc: "Recipe handed down, then up, then sideways through time.", price: 27, emoji: "🥟" },
-      { id: "gz4", name: "Warm Plasma Pudding", desc: "Glows in the dark so you can find it at 3 a.m.", price: 15, emoji: "🍮" },
+      { id: "gz1", name: "Slow-Cooked Glorbo", desc: "Basted for three lunar cycles in love and enzymes.", price: 41 },
+      { id: "gz2", name: "Tentacle Pot Pie", desc: "It hugs back. That's the flaky crust talking.", price: 33 },
+      { id: "gz3", name: "Zorp Family Dumplings", desc: "Recipe handed down, then up, then sideways through time.", price: 27 },
+      { id: "gz4", name: "Warm Plasma Pudding", desc: "Glows in the dark so you can find it at 3 a.m.", price: 15 },
     ],
   },
   {
     id: "blorbo-lab",
     name: "Blorbo's Lab Snax",
-    emoji: "🧪",
+    
     tagline: "FDA-unapproved in 43 dimensions and counting.",
     category: "Lab snacks",
     dimension: "C-131",
@@ -145,16 +143,16 @@ export const seedCatalog: SeedRestaurant[] = [
     fee: 12,
     hue: 160,
     items: [
-      { id: "bl1", name: "Beaker Popcorn", desc: "Pops itself. Occasionally re-pops inside you.", price: 13, emoji: "🍿" },
-      { id: "bl2", name: "Isotope Gummies", desc: "Half-life of 20 minutes. Eat them faster than that.", price: 16, emoji: "🧬" },
-      { id: "bl3", name: "Centrifuge Slushie", desc: "Separated into 7 flavors by 9,000 RPM of pure science.", price: 14, emoji: "🌀" },
-      { id: "bl4", name: "Petri Dish of the Day", desc: "Today's culture: surprisingly zesty.", price: 21, emoji: "🧫" },
+      { id: "bl1", name: "Beaker Popcorn", desc: "Pops itself. Occasionally re-pops inside you.", price: 13 },
+      { id: "bl2", name: "Isotope Gummies", desc: "Half-life of 20 minutes. Eat them faster than that.", price: 16 },
+      { id: "bl3", name: "Centrifuge Slushie", desc: "Separated into 7 flavors by 9,000 RPM of pure science.", price: 14 },
+      { id: "bl4", name: "Petri Dish of the Day", desc: "Today's culture: surprisingly zesty.", price: 21 },
     ],
   },
   {
     id: "sauce-shack",
     name: "The Secret Sauce Shack",
-    emoji: "🍗",
+    
     tagline: "People have crossed timelines for this sauce. Twice.",
     category: "Human food",
     dimension: "C-131",
@@ -163,15 +161,15 @@ export const seedCatalog: SeedRestaurant[] = [
     fee: 4,
     hue: 10,
     items: [
-      { id: "ss1", name: "10-Piece Multiverse Nuggets", desc: "Tastes like your favorite childhood memory (ethically sourced).", price: 28, emoji: "🍗" },
-      { id: "ss2", name: "THE Sauce (1 cup)", desc: "We legally can't tell you what's in it, when it's from, or why.", price: 35, emoji: "🥫" },
-      { id: "ss3", name: "Crispy Timeline Tenders", desc: "Fried in oil from a dimension where cholesterol fears YOU.", price: 25, emoji: "🍖" },
+      { id: "ss1", name: "10-Piece Multiverse Nuggets", desc: "Tastes like your favorite childhood memory (ethically sourced).", price: 28 },
+      { id: "ss2", name: "THE Sauce (1 cup)", desc: "We legally can't tell you what's in it, when it's from, or why.", price: 35 },
+      { id: "ss3", name: "Crispy Timeline Tenders", desc: "Fried in oil from a dimension where cholesterol fears YOU.", price: 25 },
     ],
   },
   {
     id: "donut-sing",
     name: "Donut Singularity",
-    emoji: "🍩",
+    
     tagline: "Infinite density. Infinite glaze. One-bite limit.",
     category: "Sweets",
     dimension: "B-612",
@@ -180,16 +178,16 @@ export const seedCatalog: SeedRestaurant[] = [
     fee: 7,
     hue: 320,
     items: [
-      { id: "ds1", name: "Black Hole Original", desc: "The hole is the donut. The donut is elsewhere.", price: 12, emoji: "🍩" },
-      { id: "ds2", name: "Accretion Dozen", desc: "Twelve donuts orbiting a mutual center of glaze.", price: 48, emoji: "🍩" },
-      { id: "ds3", name: "Spaghettified Churro", desc: "One churro, fourteen meters long. Physics!", price: 16, emoji: "🥖" },
-      { id: "ds4", name: "Hawking Radiation Latte", desc: "Slowly evaporates. Drink faster.", price: 13, emoji: "☕" },
+      { id: "ds1", name: "Black Hole Original", desc: "The hole is the donut. The donut is elsewhere.", price: 12 },
+      { id: "ds2", name: "Accretion Dozen", desc: "Twelve donuts orbiting a mutual center of glaze.", price: 48 },
+      { id: "ds3", name: "Spaghettified Churro", desc: "One churro, fourteen meters long. Physics!", price: 16 },
+      { id: "ds4", name: "Hawking Radiation Latte", desc: "Slowly evaporates. Drink faster.", price: 13 },
     ],
   },
   {
     id: "wormhole-waffles",
     name: "Wormhole Waffles",
-    emoji: "🧇",
+    
     tagline: "Breakfast from a timeline where it's always Sunday morning.",
     category: "Sweets",
     dimension: "Fantasy-42",
@@ -198,15 +196,15 @@ export const seedCatalog: SeedRestaurant[] = [
     fee: 0,
     hue: 50,
     items: [
-      { id: "ww1", name: "Möbius Waffle Stack", desc: "A one-sided waffle. Butter both sides anyway.", price: 23, emoji: "🧇" },
-      { id: "ww2", name: "Syrup From The Before-Times", desc: "Aged 10,000 years. Tastes like 9 a.m.", price: 9, emoji: "🍯" },
-      { id: "ww3", name: "Portal Pancakes", desc: "Bite here, it vanishes there. Great for sharing with alternate you.", price: 20, emoji: "🥞" },
+      { id: "ww1", name: "Möbius Waffle Stack", desc: "A one-sided waffle. Butter both sides anyway.", price: 23 },
+      { id: "ww2", name: "Syrup From The Before-Times", desc: "Aged 10,000 years. Tastes like 9 a.m.", price: 9 },
+      { id: "ww3", name: "Portal Pancakes", desc: "Bite here, it vanishes there. Great for sharing with alternate you.", price: 20 },
     ],
   },
   {
     id: "dragon-drive",
     name: "Dragon Drive-Thru",
-    emoji: "🐉",
+    
     tagline: "Flame-grilled by an actual dragon named Kevin.",
     category: "Alien delicacies",
     dimension: "Fantasy-42",
@@ -215,10 +213,10 @@ export const seedCatalog: SeedRestaurant[] = [
     fee: 9,
     hue: 0,
     items: [
-      { id: "dd1", name: "Kevin's Char-Blasted Wings", desc: "Cooked at 1,200 °C in 0.3 seconds. Kevin doesn't do medium-rare.", price: 31, emoji: "🍗" },
-      { id: "dd2", name: "Knight's Armor Nachos", desc: "Crunchy exterior, soft squire interior. Kidding — it's cheese.", price: 26, emoji: "🧀" },
-      { id: "dd3", name: "Potion of Thirst-Quenching +2", desc: "Grants advantage on hydration checks.", price: 12, emoji: "🧪" },
-      { id: "dd4", name: "Roasted Rock-Candy Golem", desc: "He volunteered. He's delicious.", price: 18, emoji: "🍬" },
+      { id: "dd1", name: "Kevin's Char-Blasted Wings", desc: "Cooked at 1,200 °C in 0.3 seconds. Kevin doesn't do medium-rare.", price: 31 },
+      { id: "dd2", name: "Knight's Armor Nachos", desc: "Crunchy exterior, soft squire interior. Kidding — it's cheese.", price: 26 },
+      { id: "dd3", name: "Potion of Thirst-Quenching +2", desc: "Grants advantage on hydration checks.", price: 12 },
+      { id: "dd4", name: "Roasted Rock-Candy Golem", desc: "He volunteered. He's delicious.", price: 18 },
     ],
   },
 ];

@@ -25,7 +25,6 @@ export interface MenuItemDto {
   name: string;
   desc: string;
   price: number;
-  emoji: string;
   delisted: boolean;
   prepMinutes: number;
   image?: string;
@@ -34,7 +33,6 @@ export interface MenuItemDto {
 export interface RestaurantDto {
   id: string;
   name: string;
-  emoji: string;
   tagline: string;
   category: string;
   dimension: string;
@@ -52,7 +50,6 @@ export type OrderStatus = "pending" | "delivered" | "wrong-dimension" | "lost";
 export interface OrderItemDto {
   restaurantId: string;
   name: string;
-  emoji: string;
   qty: number;
   price: number;
   /** Restaurant display name, snapshotted at purchase time. */

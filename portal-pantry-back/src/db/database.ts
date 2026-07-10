@@ -54,7 +54,6 @@ export interface UserRow {
 export interface RestaurantRow {
   id: string;
   name: string;
-  emoji: string;
   tagline: string;
   category: string;
   dimension: string;
@@ -72,7 +71,6 @@ export interface MenuItemRow {
   name: string;
   description: string;
   price: number;
-  emoji: string;
   delisted: number;
   prep_minutes: number;
   image: string | null;
@@ -93,7 +91,6 @@ export interface OrderItemRow {
   order_id: string;
   restaurant_id: string;
   name: string;
-  emoji: string;
   qty: number;
   price: number;
   restaurant_name: string;

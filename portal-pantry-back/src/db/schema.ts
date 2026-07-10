@@ -11,7 +11,6 @@ export const SCHEMA_SQL = `
 CREATE TABLE IF NOT EXISTS restaurants (
   id         TEXT PRIMARY KEY,
   name       TEXT NOT NULL,
-  emoji      TEXT NOT NULL DEFAULT '',
   tagline    TEXT NOT NULL DEFAULT '',
   category   TEXT NOT NULL,
   dimension  TEXT NOT NULL,
@@ -29,7 +28,7 @@ CREATE TABLE IF NOT EXISTS users (
   id            TEXT PRIMARY KEY,
   email         TEXT NOT NULL UNIQUE,
   name          TEXT NOT NULL,
-  avatar        TEXT NOT NULL DEFAULT '',
+  avatar        TEXT,
   dimension     TEXT NOT NULL,
   member_since  TEXT NOT NULL,
   role          TEXT NOT NULL CHECK (role IN ('customer', 'owner')),
@@ -53,7 +52,6 @@ CREATE TABLE IF NOT EXISTS menu_items (
   name          TEXT NOT NULL,
   description   TEXT NOT NULL DEFAULT '',
   price         REAL NOT NULL CHECK (price > 0),
-  emoji         TEXT NOT NULL DEFAULT '',
   delisted      INTEGER NOT NULL DEFAULT 0,
   prep_minutes  INTEGER NOT NULL CHECK (prep_minutes > 0),
   image         TEXT
@@ -76,7 +74,6 @@ CREATE TABLE IF NOT EXISTS order_items (
   order_id        TEXT NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
   restaurant_id   TEXT NOT NULL REFERENCES restaurants(id),
   name            TEXT NOT NULL,
-  emoji           TEXT NOT NULL DEFAULT '',
   qty             INTEGER NOT NULL CHECK (qty > 0),
   price           REAL NOT NULL CHECK (price >= 0),
   restaurant_name TEXT NOT NULL
@@ -88,7 +85,7 @@ CREATE TABLE IF NOT EXISTS reviews (
   id            TEXT PRIMARY KEY,
   restaurant_id TEXT NOT NULL REFERENCES restaurants(id),
   author        TEXT NOT NULL,
-  avatar        TEXT NOT NULL DEFAULT '',
+  avatar        TEXT,
   rating        INTEGER NOT NULL CHECK (rating BETWEEN 1 AND 5),
   body          TEXT NOT NULL,
   created_at    TEXT NOT NULL,
