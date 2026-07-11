@@ -6,6 +6,10 @@ import type { AppConfig } from "./config.js";
 import type { Db } from "./db/database.js";
 import type { Logger } from "./logger.js";
 import { createAuthRouter } from "./routes/auth-routes.js";
+import { createCatalogRouter } from "./routes/catalog-routes.js";
+import { createOrderRouter } from "./routes/order-routes.js";
+import { errorHandler, notFoundHandler } from "./middleware/error-handler.js";
+
 
 
 export interface AppDeps {
@@ -44,8 +48,11 @@ export function createApp({ db, config, logger }: AppDeps): Express {
   });
 
   app.use("/auth", createAuthRouter(db, config));
+  app.use(createCatalogRouter(db));
+  app.use(createOrderRouter(db));
 
-
+  app.use(notFoundHandler);
+  app.use(errorHandler(logger));
 
   return app;
 }
