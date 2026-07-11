@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🌀 Portal Pantry
+# Portal Pantry
 
 **Interdimensional food delivery — Uber Eats for the multiverse.**
 

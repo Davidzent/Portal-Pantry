@@ -1,10 +1,3 @@
-/**
- * The mock database. Normalized tables (users, sessions, restaurants,
- * menu_items, orders, reviews) seeded on first run and persisted to
- * localStorage as a single blob — stands in for Postgres while keeping
- * the exact shape a real backend would query.
- */
-
 import { restaurants as seedCatalog } from "../data";
 
 export type DbUserRole = "customer" | "owner";
@@ -17,7 +10,6 @@ export interface DbUser {
   dimension: string;
   memberSince: string;
   role: DbUserRole;
-  /** FK → restaurants.id. Only set for owner accounts. */
   restaurantId?: string;
 }
 
@@ -30,7 +22,6 @@ export interface DbSession {
 export interface DbRestaurant {
   id: string;
   name: string;
-  emoji: string;
   tagline: string;
   category: string;
   dimension: string;
@@ -39,26 +30,20 @@ export interface DbRestaurant {
   fee: number;
   hue: number;
   promoted?: boolean;
-  /** Image key, resolved to a bundled asset on the client. */
   image?: string;
 }
 
 export interface DbMenuItem {
   id: string;
-  /** FK → restaurants.id. */
   restaurantId: string;
   name: string;
   desc: string;
   price: number;
-  emoji: string;
   delisted: boolean;
-  /** Kitchen prep time in minutes — owner-adjustable, shown to customers. */
   prepMinutes: number;
-  /** Image key, resolved to a bundled asset on the client. */
   image?: string;
 }
 
-/** pending → the kitchen hasn't dispatched it yet. */
 export type DbOrderStatus =
   | "pending"
   | "delivered"
@@ -66,10 +51,8 @@ export type DbOrderStatus =
   | "lost";
 
 export interface DbOrderItem {
-  /** FK → restaurants.id — rename-proof way to attribute revenue. */
   restaurantId: string;
   name: string;
-  emoji: string;
   qty: number;
   price: number;
   restaurant: string;
@@ -77,9 +60,7 @@ export interface DbOrderItem {
 
 export interface DbOrder {
   id: string;
-  /** FK → users.id. */
   userId: string;
-  /** Display name of the customer (denormalized for the owner's view). */
   customerName: string;
   placedAt: string;
   status: DbOrderStatus;
@@ -90,15 +71,12 @@ export interface DbOrder {
 
 export interface DbReview {
   id: string;
-  /** FK → restaurants.id. */
   restaurantId: string;
   author: string;
   avatar: string;
-  /** 1–5 stars. */
   rating: number;
   body: string;
   createdAt: string;
-  /** Owner reply, if any. */
   reply?: string;
   repliedAt?: string;
 }
@@ -112,30 +90,20 @@ export interface Database {
   reviews: DbReview[];
 }
 
-const DB_KEY = "pp-db-v4";
-/** Storage keys from earlier iterations — cleaned up on first seed. */
+const DB_KEY = "pp-db-v5";
 const LEGACY_KEYS = [
   "pp-db-v1",
   "pp-db-v2",
   "pp-db-v3",
+  "pp-db-v4",
   "pp-session",
   "pp-orders",
   "pp-store-overrides",
   "pp-token",
 ];
 
-/** The kitchen every demo owner account is linked to. */
 export const OWNER_RESTAURANT_ID = "neutrino";
 
-const AVATARS = ["🧑‍🚀", "👽", "🤖", "🧪", "🛸", "🥒", "🦑", "🔮"];
-
-function avatarFor(email: string): string {
-  let hash = 0;
-  for (const ch of email) hash = (hash + ch.charCodeAt(0)) % 997;
-  return AVATARS[hash % AVATARS.length];
-}
-
-/** "you.name-42@x.com" → "You Name". */
 function nameFor(email: string): string {
   const local = email.split("@")[0] ?? "";
   const parts = local
@@ -151,7 +119,6 @@ export function newId(prefix: string): string {
   return `${prefix}_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
 }
 
-/** Sensible default prep time when the catalog doesn't specify one. */
 function defaultPrep(price: number): number {
   return Math.max(5, Math.round(price / 3));
 }
@@ -167,7 +134,6 @@ function minutesAgo(mins: number): string {
   return new Date(Date.now() - mins * 60_000).toISOString();
 }
 
-/** Welcome history attached to every new customer account. */
 function seedOrdersFor(userId: string, customerName: string): DbOrder[] {
   return [
     {
@@ -178,8 +144,8 @@ function seedOrdersFor(userId: string, customerName: string): DbOrder[] {
       status: "delivered",
       dimension: "Ω-77",
       items: [
-        { restaurantId: "neutrino", name: "Phase-Through Pho", emoji: "🍜", qty: 2, price: 29, restaurant: "Neutrino Noodles" },
-        { restaurantId: "neutrino", name: "Zero-G Gyoza", emoji: "🥟", qty: 1, price: 21, restaurant: "Neutrino Noodles" },
+        { restaurantId: "neutrino", name: "Phase-Through Pho", qty: 2, price: 29, restaurant: "Neutrino Noodles" },
+        { restaurantId: "neutrino", name: "Zero-G Gyoza", qty: 1, price: 21, restaurant: "Neutrino Noodles" },
       ],
       total: 91,
     },
@@ -191,9 +157,9 @@ function seedOrdersFor(userId: string, customerName: string): DbOrder[] {
       status: "delivered",
       dimension: "C-131",
       items: [
-        { restaurantId: "gargantua", name: "Event Horizon Burger", emoji: "🍔", qty: 1, price: 45, restaurant: "Greasy Gargantua" },
-        { restaurantId: "gargantua", name: "Singularity Fries", emoji: "🍟", qty: 2, price: 18, restaurant: "Greasy Gargantua" },
-        { restaurantId: "gargantua", name: "Dark Matter Shake", emoji: "🥤", qty: 1, price: 22, restaurant: "Greasy Gargantua" },
+        { restaurantId: "gargantua", name: "Event Horizon Burger", qty: 1, price: 45, restaurant: "Greasy Gargantua" },
+        { restaurantId: "gargantua", name: "Singularity Fries", qty: 2, price: 18, restaurant: "Greasy Gargantua" },
+        { restaurantId: "gargantua", name: "Dark Matter Shake", qty: 1, price: 22, restaurant: "Greasy Gargantua" },
       ],
       total: 115,
     },
@@ -205,8 +171,8 @@ function seedOrdersFor(userId: string, customerName: string): DbOrder[] {
       status: "wrong-dimension",
       dimension: "B-612",
       items: [
-        { restaurantId: "zorp", name: "Tentacle Pot Pie", emoji: "🥧", qty: 1, price: 33, restaurant: "Grandma Zorp's" },
-        { restaurantId: "zorp", name: "Warm Plasma Pudding", emoji: "🍮", qty: 2, price: 15, restaurant: "Grandma Zorp's" },
+        { restaurantId: "zorp", name: "Tentacle Pot Pie", qty: 1, price: 33, restaurant: "Grandma Zorp's" },
+        { restaurantId: "zorp", name: "Warm Plasma Pudding", qty: 2, price: 15, restaurant: "Grandma Zorp's" },
       ],
       total: 75,
     },
@@ -218,23 +184,21 @@ function seedOrdersFor(userId: string, customerName: string): DbOrder[] {
       status: "lost",
       dimension: "Pickle-9",
       items: [
-        { restaurantId: "brined-one", name: "Dill-emma Dog", emoji: "🌭", qty: 2, price: 19, restaurant: "The Brined One" },
-        { restaurantId: "brined-one", name: "Brine Smoothie", emoji: "🧃", qty: 1, price: 11, restaurant: "The Brined One" },
+        { restaurantId: "brined-one", name: "Dill-emma Dog", qty: 2, price: 19, restaurant: "The Brined One" },
+        { restaurantId: "brined-one", name: "Brine Smoothie", qty: 1, price: 11, restaurant: "The Brined One" },
       ],
       total: 61,
     },
   ];
 }
 
-/** Neutrino Noodles order book — what the owner sees on day one. */
 function seedNeutrinoOrders(): DbOrder[] {
-  const pho = { restaurantId: "neutrino", name: "Phase-Through Pho", emoji: "🍜", price: 29, restaurant: "Neutrino Noodles" };
-  const gyoza = { restaurantId: "neutrino", name: "Zero-G Gyoza", emoji: "🥟", price: 21, restaurant: "Neutrino Noodles" };
-  const broth = { restaurantId: "neutrino", name: "Antimatter Broth Refill", emoji: "🫕", price: 3, restaurant: "Neutrino Noodles" };
-  const egg = { restaurantId: "neutrino", name: "Neutron Star Egg", emoji: "🥚", price: 12, restaurant: "Neutrino Noodles" };
+  const pho = { restaurantId: "neutrino", name: "Phase-Through Pho", price: 29, restaurant: "Neutrino Noodles" };
+  const gyoza = { restaurantId: "neutrino", name: "Zero-G Gyoza", price: 21, restaurant: "Neutrino Noodles" };
+  const broth = { restaurantId: "neutrino", name: "Antimatter Broth Refill", price: 3, restaurant: "Neutrino Noodles" };
+  const egg = { restaurantId: "neutrino", name: "Neutron Star Egg", price: 12, restaurant: "Neutrino Noodles" };
 
   return [
-    // Pending — the live queue.
     {
       id: "PP-91443",
       userId: "usr_seed_cust",
@@ -265,7 +229,6 @@ function seedNeutrinoOrders(): DbOrder[] {
       items: [{ ...pho, qty: 1 }, { ...gyoza, qty: 1 }],
       total: 62,
     },
-    // Delivered — the earnings history.
     {
       id: "PP-90888",
       userId: "usr_seed_cust2",
@@ -306,7 +269,6 @@ function seedNeutrinoOrders(): DbOrder[] {
       items: [{ ...pho, qty: 2 }, { ...egg, qty: 2 }],
       total: 94,
     },
-    // A hiccup — refunded, so it dents the numbers realistically.
     {
       id: "PP-90211",
       userId: "usr_seed_cust2",
@@ -320,14 +282,13 @@ function seedNeutrinoOrders(): DbOrder[] {
   ];
 }
 
-/** Sample reviews — Neutrino Noodles only, a couple already answered. */
 function seedReviews(): DbReview[] {
   return [
     {
       id: "rev_1",
       restaurantId: "neutrino",
       author: "Rick S.",
-      avatar: "🥼",
+      avatar: "",
       rating: 5,
       body: "The Phase-Through Pho literally passed through me and I STILL think about it. *burp* That's science, baby. Ten stars, your form only allows five.",
       createdAt: daysAgo(2, 22, 14),
@@ -339,7 +300,7 @@ function seedReviews(): DbReview[] {
       id: "rev_2",
       restaurantId: "neutrino",
       author: "Morty S.",
-      avatar: "😰",
+      avatar: "",
       rating: 4,
       body: "Aw geez, the Zero-G Gyoza floated right off my plate a-and I had to chase them around the ship, but they were r-really good, so, y'know, four stars.",
       createdAt: daysAgo(5, 13, 40),
@@ -348,7 +309,7 @@ function seedReviews(): DbReview[] {
       id: "rev_3",
       restaurantId: "neutrino",
       author: "Birdperson",
-      avatar: "🦅",
+      avatar: "",
       rating: 5,
       body: "In my culture, Antimatter Broth is served only at weddings and funerals. This bowl honored both traditions with dignity.",
       createdAt: daysAgo(7, 9, 5),
@@ -359,7 +320,7 @@ function seedReviews(): DbReview[] {
       id: "rev_4",
       restaurantId: "neutrino",
       author: "Summer S.",
-      avatar: "💅",
+      avatar: "",
       rating: 3,
       body: "The Neutron Star Egg cracked my table in half. Kind of iconic honestly but three stars because now I eat on the floor.",
       createdAt: daysAgo(9, 18, 52),
@@ -368,7 +329,7 @@ function seedReviews(): DbReview[] {
       id: "rev_5",
       restaurantId: "neutrino",
       author: "Squanchy",
-      avatar: "🐱",
+      avatar: "",
       rating: 4,
       body: "Great spot to really squanch a warm bowl of noodles in peace. Cozy lighting, no questions asked. That's all a guy needs.",
       createdAt: daysAgo(12, 1, 30),
@@ -390,12 +351,11 @@ function seed(): Database {
   );
   return {
     users: [
-      // The canonical demo owner account, on file like any real record.
       {
         id: "usr_seed_owner",
         email: "owner@neutrino.pp",
         name: "Noodle Boss",
-        avatar: "🍜",
+        avatar: "",
         dimension: "Ω-77",
         memberSince: "2839",
         role: "owner",
@@ -421,14 +381,12 @@ export function getDb(): Database {
       return cache;
     }
   } catch {
-    // corrupted or unavailable — fall through to a fresh seed
   }
   cache = seed();
   for (const key of LEGACY_KEYS) {
     try {
       localStorage.removeItem(key);
     } catch {
-      // ignore
     }
   }
   persist();
@@ -440,11 +398,9 @@ export function persist(): void {
   try {
     localStorage.setItem(DB_KEY, JSON.stringify(cache));
   } catch {
-    // storage unavailable — the "database" lives in memory for this tab
   }
 }
 
-/** INSERT INTO restaurants — a brand-new kitchen with sensible defaults. */
 export function createRestaurant(
   db: Database,
   opts: {
@@ -452,14 +408,12 @@ export function createRestaurant(
     tagline?: string;
     category?: string;
     dimension?: string;
-    emoji?: string;
     image?: string;
   },
 ): DbRestaurant {
   const restaurant: DbRestaurant = {
     id: newId("rest"),
     name: opts.name.trim(),
-    emoji: opts.emoji?.trim() || "",
     tagline: opts.tagline?.trim() || "A fresh new kitchen in the multiverse.",
     category: opts.category || "Human food",
     dimension: opts.dimension || "C-131",
@@ -473,10 +427,6 @@ export function createRestaurant(
   return restaurant;
 }
 
-/**
- * INSERT INTO users. Registration entry point — owner sign-ups also mint
- * a brand-new restaurant and link the account to it.
- */
 export function registerAccount(
   db: Database,
   opts: {
@@ -487,7 +437,6 @@ export function registerAccount(
   },
 ): DbUser {
   let restaurantId: string | undefined;
-  let avatar: string | undefined;
   if (opts.role === "owner") {
     const restaurant = createRestaurant(db, {
       name:
@@ -495,13 +444,12 @@ export function registerAccount(
         (opts.name ? `${opts.name.trim()}'s Kitchen` : "New Kitchen"),
     });
     restaurantId = restaurant.id;
-    avatar = restaurant.emoji;
   }
   const user: DbUser = {
     id: newId("usr"),
     email: opts.email,
     name: opts.name?.trim() || nameFor(opts.email),
-    avatar: avatar ?? avatarFor(opts.email),
+    avatar: "",
     dimension: "C-131",
     memberSince: "2847",
     role: opts.role,

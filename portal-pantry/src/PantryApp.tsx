@@ -25,13 +25,11 @@ export interface CartEntry {
   key: string;
   restaurantId: string;
   name: string;
-  emoji: string;
   price: number;
   qty: number;
   restaurant: string;
 }
 
-/** Current hash route: "manage" for the owner dashboard, else the storefront. */
 function readRoute(): string {
   return window.location.hash.replace(/^#\/?/, "").split(/[/?]/)[0];
 }
@@ -101,15 +99,12 @@ export default function PantryApp() {
   const [loginOpen, setLoginOpen] = useState(false);
   const [ordersOpen, setOrdersOpen] = useState(false);
   const [route, setRoute] = useState(readRoute);
-  /** Snapshot of the total at the moment of ordering (cart clears right away). */
   const [placedTotal, setPlacedTotal] = useState(0);
-  /** The catalog, served by the backend (delisted dishes already excluded). */
   const [allRestaurants, setAllRestaurants] = useState<Restaurant[]>([]);
   const [catalogLoading, setCatalogLoading] = useState(true);
 
   const isOwner = user?.role === "owner";
 
-  // Keep route in sync with the URL hash (back button, deep links).
   useEffect(() => {
     const onHash = () => setRoute(readRoute());
     window.addEventListener("hashchange", onHash);
@@ -122,12 +117,10 @@ export default function PantryApp() {
   }, []);
 
   const goStorefront = useCallback(() => {
-    // Clear the hash without leaving a "#" in the URL.
     history.pushState("", "", window.location.pathname + window.location.search);
     setRoute("");
   }, []);
 
-  // Load the catalog (GET /restaurants).
   useEffect(() => {
     let mounted = true;
     getRestaurants().then((list) => {
@@ -141,14 +134,11 @@ export default function PantryApp() {
     };
   }, []);
 
-  /** Re-fetch after owner edits so changes go live on the storefront. */
   const refreshRestaurants = useCallback(async () => {
     setAllRestaurants(await getRestaurants());
   }, []);
-  /** Set when checkout is interrupted by sign-in — resume it after. */
   const resumeCheckout = useRef(false);
 
-  // Restore the session behind the stored token (GET /auth/me).
   useEffect(() => {
     let mounted = true;
     getMe().then((restored) => {
@@ -201,7 +191,6 @@ export default function PantryApp() {
           key,
           restaurantId: restaurant.id,
           name: item.name,
-          emoji: item.emoji,
           price: item.price,
           qty: 1,
           restaurant: restaurant.name,
@@ -218,7 +207,6 @@ export default function PantryApp() {
     );
   };
 
-  /** Places the order (POST /orders) and runs the portal show. */
   const placeOrder = () => {
     const deliverTo =
       dimension === "All dimensions" ? (user?.dimension ?? "C-131") : dimension;
@@ -227,7 +215,6 @@ export default function PantryApp() {
       items: cart.map((e) => ({
         restaurantId: e.restaurantId,
         name: e.name,
-        emoji: e.emoji,
         qty: e.qty,
         price: e.price,
         restaurant: e.restaurant,
@@ -239,7 +226,6 @@ export default function PantryApp() {
     setCheckoutOpen(true);
   };
 
-  // Owners get their own full-page dashboard.
   if (isOwner && route === "manage" && user) {
     return (
       <OwnerDashboard
@@ -466,7 +452,6 @@ export default function PantryApp() {
             if (user) {
               placeOrder();
             } else {
-              // Sign in first, then resume straight into checkout.
               resumeCheckout.current = true;
               setLoginOpen(true);
             }
@@ -494,7 +479,6 @@ export default function PantryApp() {
             setUser(signedIn);
             setLoginOpen(false);
             if (signedIn.role === "owner") {
-              // Owners go straight to their dashboard.
               resumeCheckout.current = false;
               goManage();
             } else if (resumeCheckout.current) {

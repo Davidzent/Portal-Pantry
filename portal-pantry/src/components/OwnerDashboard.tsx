@@ -285,7 +285,14 @@ function MenuItemEditor({
           onClick={save}
           disabled={busy || !dirty}
         >
-          {flash ? "Saved ✓" : "Save"}
+          {flash ? (
+            <>
+              <Icon name="check" size={14} />
+              Saved
+            </>
+          ) : (
+            "Save"
+          )}
         </button>
         <button
           type="button"
@@ -614,7 +621,14 @@ function MenuTab({
           onClick={saveStore}
           disabled={busy || !dirty}
         >
-          {flash ? "Saved ✓" : "Save store details"}
+          {flash ? (
+            <>
+              <Icon name="check" size={14} />
+              Saved
+            </>
+          ) : (
+            "Save store details"
+          )}
         </button>
       </div>
 
