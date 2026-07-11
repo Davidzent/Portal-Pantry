@@ -1,12 +1,4 @@
-/**
- * Customer orders. Every query is scoped by the session's user id;
- * owners are turned away — they're here to cook, not eat.
- *
- * Inherited trade-off, documented: line items arrive priced from the
- * client (the API contract carries no menu-item ids), so totals are
- * sanity-checked, not re-derived. A production system would send item
- * ids and reprice server-side.
- */
+
 import type { Request } from "express";
 import { z } from "zod";
 import type { Db, OrderRow } from "../db/database.js";
@@ -26,7 +18,6 @@ import type { OrderDto } from "../types.js";
 const orderItemSchema = z.object({
   restaurantId: z.string().min(1).max(64),
   name: z.string().min(1).max(120),
-  emoji: z.string().max(16).default(""),
   qty: z.number().int().min(1).max(999),
   price: z.number().finite().min(0).max(1_000_000),
   restaurant: z.string().max(80).default(""),
@@ -38,7 +29,6 @@ const newOrderSchema = z.object({
   dimension: z.string().max(40).optional(),
 });
 
-/** The signed-in user's history, newest first. */
 export function listOrders(db: Db, req: Request): OrderDto[] {
   const user = authenticate(db, req);
   const rows = db
@@ -61,7 +51,6 @@ export function createOrder(db: Db, req: Request, rawBody: unknown): OrderDto {
     throw new HttpError(422, "Order total looks non-euclidean.");
   }
 
-  // Every referenced kitchen must actually exist in this reality.
   const kitchenIds = [...new Set(body.items.map((item) => item.restaurantId))];
   const placeholders = kitchenIds.map(() => "?").join(", ");
   const known = db
@@ -72,7 +61,6 @@ export function createOrder(db: Db, req: Request, rawBody: unknown): OrderDto {
   }
 
   const order = withTransaction(db, () => {
-    // PP-numbers are short on purpose; retry the rare collision.
     let id = newOrderNumber();
     for (let attempt = 0; orderIdExists(db, id); attempt += 1) {
       id = attempt < 20 ? newOrderNumber() : newId("PP").toUpperCase();

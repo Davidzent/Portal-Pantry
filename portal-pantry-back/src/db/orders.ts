@@ -1,9 +1,4 @@
-/**
- * Order persistence helpers shared by the customer API, the owner API,
- * and the seeder. An order is a header row plus line-item rows that
- * snapshot dish name/price at purchase time, so history stays truthful
- * when menus change.
- */
+
 import type { Db, OrderItemRow, OrderRow } from "./database.js";
 import type { OrderDto, OrderItemDto, OrderStatus } from "../types.js";
 
@@ -61,10 +56,7 @@ function itemToDto(row: OrderItemRow): OrderItemDto {
   };
 }
 
-/**
- * Line items for a set of orders in one query, optionally narrowed to a
- * single kitchen (the owner view), grouped by order id.
- */
+
 export function itemsByOrder(
   db: Db,
   orderIds: string[],

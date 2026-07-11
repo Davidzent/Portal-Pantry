@@ -1,7 +1,4 @@
-/**
- * Restaurant + menu query helpers shared by the public catalog and the
- * owner dashboard. Menus load in one query per request (no N+1).
- */
+
 import type { Db, MenuItemRow, RestaurantRow } from "./database.js";
 import type { MenuItemDto, RestaurantDto } from "../types.js";
 

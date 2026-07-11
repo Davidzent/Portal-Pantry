@@ -1,8 +1,4 @@
-/**
- * The public storefront: the restaurant catalog (delisted dishes
- * filtered server-side) and per-kitchen reviews, including posting one
- * as a signed-in customer.
- */
+
 import type { Request } from "express";
 import { z } from "zod";
 import type { Db, ReviewRow } from "../db/database.js";
@@ -26,12 +22,10 @@ export function reviewToDto(row: ReviewRow): ReviewDto {
   };
 }
 
-/** The customer-facing catalog — delisted dishes are already gone. */
 export function listCatalog(db: Db): RestaurantDto[] {
   return listRestaurantsWithItems(db, { includeDelisted: false });
 }
 
-/** Public reviews for one kitchen, newest first. */
 export function listReviews(db: Db, restaurantId: string): ReviewDto[] {
   const rows = db
     .prepare("SELECT * FROM reviews WHERE restaurant_id = ? ORDER BY created_at DESC")
@@ -39,7 +33,6 @@ export function listReviews(db: Db, restaurantId: string): ReviewDto[] {
   return rows.map(reviewToDto);
 }
 
-/** A restaurant's rating is the average of its reviews (1 decimal). */
 export function recomputeRating(db: Db, restaurantId: string): void {
   db.prepare(
     `UPDATE restaurants

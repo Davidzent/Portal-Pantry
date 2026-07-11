@@ -8,6 +8,7 @@ import { hashPassword, verifyPassword } from "../lib/password.js";
 import { HttpError } from "../lib/http-error.js";
 import { parseBody } from "../lib/validate.js";
 import { authenticate, bearerToken } from "../middleware/auth.js";
+import { insertWelcomeOrders } from "../db/seed.js";
 import type { UserDto } from "../types.js";
 
 const EMAIL_RE = /^\S+@\S+\.\S+$/;
@@ -165,6 +166,10 @@ export async function register(
       new Date().toISOString(),
     );
 
+
+    if (role === "customer") {
+      insertWelcomeOrders(db, userId, displayName);
+    }
 
     const row = db.prepare("SELECT * FROM users WHERE id = ?").get(userId) as unknown as UserRow;
     return { token: createSession(db, userId, config.sessionTtlMs), user: userToDto(db, row) };

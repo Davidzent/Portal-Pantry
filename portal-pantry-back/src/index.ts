@@ -1,11 +1,9 @@
-/**
- * Boot: load config, open + seed the database, start the HTTP server,
- * and shut everything down cleanly on SIGINT/SIGTERM.
- */
+
 import "dotenv/config";
 import { loadConfig } from "./config.js";
 import { createLogger } from "./logger.js";
 import { openDatabase } from "./db/database.js";
+import { seedDatabaseIfEmpty } from "./db/seed.js";
 import { pruneExpiredSessions } from "./services/auth-service.js";
 import { createApp } from "./app.js";
 
@@ -13,6 +11,10 @@ const config = loadConfig();
 const logger = createLogger(config);
 
 const db = openDatabase(config.databasePath);
+
+if (seedDatabaseIfEmpty(db)) {
+  logger.info("Seeded demo data into an empty database");
+}
 
 const sweptSessions = pruneExpiredSessions(db);
 if (sweptSessions > 0) {
@@ -33,7 +35,6 @@ function shutdown(signal: string): void {
     db.close();
     process.exit(0);
   });
-  // Don't let a lingering keep-alive socket hold the process hostage.
   setTimeout(() => process.exit(1), 10_000).unref();
 }
 
