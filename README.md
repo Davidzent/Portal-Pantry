@@ -7,8 +7,9 @@
 [![React](https://img.shields.io/badge/React-19-149ECA?logo=react&logoColor=white)](https://react.dev)
 [![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org)
 [![Vite](https://img.shields.io/badge/Vite-dev%20%26%20build-646CFF?logo=vite&logoColor=white)](https://vite.dev)
-![Client-side](https://img.shields.io/badge/backend-mocked%20in--browser-7be04b)
-![State](https://img.shields.io/badge/state-100%25%20client--side-ff5fa2)
+![Backend](https://img.shields.io/badge/backend-in--browser%20mock%20or%20Node%20%2B%20SQLite-7be04b)
+![Tests](https://img.shields.io/badge/tests-Vitest-6E9F18?logo=vitest&logoColor=white)
+[![Live demo](https://img.shields.io/badge/live-Firebase%20Hosting-FFCA28?logo=firebase&logoColor=white)](https://www.zntsns.com/portal-pantry/)
 
 **[▶ Try the live demo](https://www.zntsns.com/portal-pantry/)** · built by
 [David Guijosa](https://www.zntsns.com)
@@ -17,11 +18,12 @@
 
 ![Portal Pantry storefront](./docs/storefront.jpg)
 
-Portal Pantry is a full food-delivery front end with a **production-shaped
-architecture** — except the entire backend is mocked in the browser. It has two
-account roles (customer & store owner), a normalized mock database, session
-auth, an owner analytics dashboard, reviews, and image uploads. No server, no
-build step beyond Vite; everything persists to `localStorage`.
+Portal Pantry is a full food-delivery app with a **production-shaped
+architecture** — two account roles (customer & store owner), session auth, an
+owner analytics dashboard, reviews, and in-browser image uploads. It runs **two
+ways from the same UI**: against a zero-setup **in-browser mock backend** (state
+persists to `localStorage`), or against the included **real Node.js + SQLite
+backend** — identical API contract, switched with a single environment variable.
 
 > Everything here is fictional. Any resemblance to your dimension is a
 > scheduling coincidence.
@@ -66,28 +68,33 @@ build step beyond Vite; everything persists to `localStorage`.
 
 ## Architecture
 
-The interesting part: the app is wired like a real client/server app across
-three layers, so the UI has no idea its backend lives in the same tab.
+The app is wired like a real client/server app across three layers. The typed
+SDK the UI imports never changes — only the transport beneath it does, so the
+same components run against either backend.
 
 ```
-components/  ─────────►  api/  ─────────►  server/
-  React UI               SDK + HTTP        mock backend
-  (only calls the SDK)   client            (DB + router)
+components/ ──► api/*.ts ──► apiClient ──┬─► server/             in-browser mock (localStorage)
+  React UI      typed SDK    transport   └─► portal-pantry-back/ real Node API (Express 5 + node:sqlite)
 ```
 
-1. **`server/db.ts`** — a normalized mock **database**: `users`, `sessions`,
-   `restaurants`, `menu_items`, `orders`, `reviews`. Seeded on first run and
-   persisted to `localStorage` as one blob (like a tiny Postgres).
-2. **`server/index.ts`** — a **router** with real HTTP semantics: bearer-token
-   sessions, ownership checks, and status-coded validation (`401` / `403` /
-   `404` / `409` / `422`). Delisted dishes are filtered server-side; finances
-   are computed server-side.
-3. **`api/apiClient.ts`** — a `fetch`-shaped transport (simulated latency,
-   automatic bearer token) that routes requests to the mock server.
-4. **`api/*.ts`** — typed SDK modules (`authApi`, `storeApi`, `ordersApi`) that
-   the components import. The UI never touches the "database" directly.
+- **`api/*.ts`** — typed SDK modules (`authApi`, `storeApi`, `ordersApi`) the
+  components import. The UI never touches a "database" directly.
+- **`api/apiClient.ts`** — a `fetch`-shaped transport with an automatic bearer
+  token. When `VITE_API_URL` is set it makes **real HTTP calls** to the Node
+  backend; when it isn't, it routes to the in-browser mock (simulated latency).
+- **`server/` — in-browser mock.** A normalized **database** (`users`,
+  `sessions`, `restaurants`, `menu_items`, `orders`, `reviews`) seeded on first
+  run and persisted to `localStorage`, behind a **router** with real HTTP
+  semantics: bearer-token sessions, ownership checks, status-coded validation
+  (`401` / `403` / `404` / `409` / `422`).
+- **`portal-pantry-back/` — real backend.** The same contract as a standalone
+  **Express 5 + TypeScript** service on Node's built-in `node:sqlite`: same
+  tables, same status codes, seeded on first boot. Delisted dishes are filtered
+  and finances computed server-side in both.
 
 ### A few endpoints
+
+Both backends implement the same contract:
 
 | Method & path | Auth | Purpose |
 |---|---|---|
@@ -105,11 +112,16 @@ Owner-uploaded images are resized & re-encoded to WebP **in the browser**
 
 ## Tech
 
-- React 19 + TypeScript (strict), no state library — plain hooks
-- Hand-written CSS (cosmic dark theme, `Titan One` + `Baloo 2`)
-- Zero third-party runtime dependencies
+- **Frontend** — React 19 + TypeScript (strict), no state library (plain hooks),
+  hand-written CSS (cosmic dark theme, `Titan One` + `Baloo 2`), built with Vite.
+  Zero third-party runtime dependencies.
+- **Backend (optional)** — Node 22+ · Express 5 · `node:sqlite` · Zod validation
+  · pino logging · Vitest. Typed end-to-end; seeds its database on first boot.
 
 ## Run it
+
+**Option A — zero setup (in-browser mock).** No backend, no config; state lives
+in `localStorage`.
 
 ```bash
 cd portal-pantry
@@ -118,8 +130,49 @@ npm run dev
 # then open http://localhost:5173/portal-pantry/
 ```
 
+**Option B — with the real backend.** Run the API (needs **Node ≥ 22.5** for
+`node:sqlite`), then point the frontend at it.
+
+```bash
+# 1) start the API — seeds a SQLite DB on first boot, listens on :4000
+cd portal-pantry-back
+npm install
+npm run dev
+
+# 2) in another shell, point the frontend at it and run it
+cd portal-pantry
+npm install
+# uncomment VITE_API_URL in .env.local (or create the file):
+#   VITE_API_URL=http://localhost:4000
+npm run dev
+```
+
+Delete `.env.local` (or unset `VITE_API_URL`) to fall back to the mock. Backend
+config — port, DB path, CORS origins, session TTL — is documented in
+`portal-pantry-back/.env.example`.
+
+The backend ships a **Vitest** suite (auth, catalog, orders, and the owner API);
+run it with `npm test` from `portal-pantry-back`.
+
 **Try the owner side:** sign in as `owner@neutrino.pp` (any 4+ char password),
 or register a new owner account to create your own kitchen from scratch.
 
-**Reset the demo:** clear the site's `localStorage` (DevTools → Application →
-Local storage) and reload — the universe reseeds itself.
+**Reset the demo:** on the mock, clear the site's `localStorage` (DevTools →
+Application → Local storage) and reload; on the real backend, delete its SQLite
+file under `portal-pantry-back/data/` and restart. Either way the universe
+reseeds itself.
+
+---
+
+## Deployment
+
+The frontend is a static build (`npm run build`) served under the
+`/portal-pantry/` base path — it ships as one project inside my portfolio
+**monorepo**, which builds and deploys it to **Firebase Hosting**. The live
+site is **<https://www.zntsns.com/portal-pantry/>**. (That CI/CD lives in the
+monorepo, not this repo.)
+
+The hosted build ships the in-browser mock, so the public demo runs entirely
+client-side with no server to operate. To serve it against a live API instead,
+set `VITE_API_URL` at build time and add the site's origin to the backend's
+`CORS_ORIGINS`.
