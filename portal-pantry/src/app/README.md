@@ -10,7 +10,8 @@
 ![State](https://img.shields.io/badge/state-100%25%20client--side-ff5fa2)
 
 A live demo by [David Guijosa](https://www.zntsns.com) · part of the
-[portfolio](../../README.md) · served at `/portal-pantry/`
+[portfolio](../../../README.md) · served at `/portal-pantry/` (the case-study
+page for this project lives at `/portal-pantry/case-study/`)
 
 </div>
 

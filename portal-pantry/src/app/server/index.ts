@@ -1,3 +1,4 @@
+import { PORTAL_TOLL } from "../data";
 import {
   getDb,
   newId,
@@ -308,9 +309,16 @@ function handleCreateMenuItem(
   return { status: 201, data: { item: itemDto(item) } };
 }
 
+interface NewOrderLine {
+  restaurantId?: string;
+  itemId?: string;
+  qty?: number;
+}
+
 interface NewOrderBody {
-  items?: DbOrder["items"];
-  total?: number;
+  items?: NewOrderLine[];
+  // Clients may still send a total; the kitchen recomputes and ignores it.
+  total?: unknown;
   dimension?: string;
 }
 
@@ -326,9 +334,31 @@ function handleCreateOrder(db: Database, token: string | null, raw: unknown): Mo
   if (!Array.isArray(body.items) || body.items.length === 0) {
     throw new HttpError(422, "An order needs at least one dish.");
   }
-  if (!Number.isFinite(body.total) || (body.total ?? 0) <= 0) {
-    throw new HttpError(422, "Order total looks non-euclidean.");
-  }
+
+  // Price every line from the catalog. The client's arithmetic is not consulted.
+  const pricedItems = body.items.map((line) => {
+    const qty = Math.round(Number(line.qty));
+    if (!Number.isFinite(qty) || qty < 1 || qty > 999) {
+      throw new HttpError(422, "Quantity must be between 1 and 999.");
+    }
+    const item = db.menuItems.find((m) => m.id === line.itemId);
+    if (!item || item.restaurantId !== line.restaurantId) {
+      throw new HttpError(422, "One of those dishes isn't on a menu in this reality.");
+    }
+    if (item.delisted) {
+      throw new HttpError(422, "That dish has been delisted — the menu has moved on.");
+    }
+    const kitchen = db.restaurants.find((r) => r.id === item.restaurantId);
+    return {
+      restaurantId: item.restaurantId,
+      name: item.name,
+      qty,
+      price: item.price,
+      restaurant: kitchen?.name ?? "",
+    };
+  });
+  const subtotal = pricedItems.reduce((sum, item) => sum + item.price * item.qty, 0);
+
   const order: DbOrder = {
     id: `PP-${Math.floor(10000 + Math.random() * 90000)}`,
     userId: user.id,
@@ -336,8 +366,8 @@ function handleCreateOrder(db: Database, token: string | null, raw: unknown): Mo
     placedAt: new Date().toISOString(),
     status: "pending",
     dimension: body.dimension ?? user.dimension,
-    items: body.items,
-    total: body.total ?? 0,
+    items: pricedItems,
+    total: subtotal + PORTAL_TOLL,
   };
   db.orders.push(order);
   persist();

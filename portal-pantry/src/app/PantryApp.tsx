@@ -7,7 +7,6 @@ import {
   categories,
   CURRENCY,
   dimensions,
-  PORTAL_TOLL,
   type MenuItem,
   type Restaurant,
 } from "./data";
@@ -24,6 +23,7 @@ import { getRestaurants } from "./api/storeApi";
 export interface CartEntry {
   key: string;
   restaurantId: string;
+  itemId: string;
   name: string;
   price: number;
   qty: number;
@@ -176,7 +176,6 @@ export default function PantryApp() {
 
   const cartCount = cart.reduce((n, e) => n + e.qty, 0);
   const subtotal = cart.reduce((n, e) => n + e.price * e.qty, 0);
-  const total = subtotal + (cart.length > 0 ? PORTAL_TOLL : 0);
 
   const addItem = (restaurant: Restaurant, item: MenuItem) => {
     const key = `${restaurant.id}:${item.id}`;
@@ -190,6 +189,7 @@ export default function PantryApp() {
         {
           key,
           restaurantId: restaurant.id,
+          itemId: item.id,
           name: item.name,
           price: item.price,
           qty: 1,
@@ -207,23 +207,27 @@ export default function PantryApp() {
     );
   };
 
-  const placeOrder = () => {
+  const placeOrder = async () => {
     const deliverTo =
       dimension === "All dimensions" ? (user?.dimension ?? "C-131") : dimension;
-    setPlacedTotal(total);
-    void createOrder({
-      items: cart.map((e) => ({
-        restaurantId: e.restaurantId,
-        name: e.name,
-        qty: e.qty,
-        price: e.price,
-        restaurant: e.restaurant,
-      })),
-      total,
-      dimension: deliverTo,
-    });
-    setCart([]);
-    setCheckoutOpen(true);
+    try {
+      // The kitchen prices the order; the local `total` is display-only.
+      const placed = await createOrder({
+        items: cart.map((e) => ({
+          restaurantId: e.restaurantId,
+          itemId: e.itemId,
+          qty: e.qty,
+        })),
+        dimension: deliverTo,
+      });
+      setPlacedTotal(placed.total);
+      setCart([]);
+      setCheckoutOpen(true);
+    } catch (err) {
+      window.alert(
+        err instanceof Error ? err.message : "The portal flickered — try again.",
+      );
+    }
   };
 
   if (isOwner && route === "manage" && user) {
@@ -241,7 +245,7 @@ export default function PantryApp() {
     <div className="pp-page">
       <header className="pp-header">
         <div className="pp-shell pp-header-inner">
-          <a href="/portal-pantry/" className="pp-brand">
+          <a href={import.meta.env.BASE_URL} className="pp-brand">
             <PortalMark size={36} />
             <span className="pp-brand-name">
               Portal<span> Pantry</span>
@@ -450,7 +454,7 @@ export default function PantryApp() {
           onCheckout={() => {
             setDrawerOpen(false);
             if (user) {
-              placeOrder();
+              void placeOrder();
             } else {
               resumeCheckout.current = true;
               setLoginOpen(true);
@@ -483,7 +487,7 @@ export default function PantryApp() {
               goManage();
             } else if (resumeCheckout.current) {
               resumeCheckout.current = false;
-              placeOrder();
+              void placeOrder();
             }
           }}
           onClose={() => {

@@ -1,0 +1,1391 @@
+/* ============================================================
+   Portal Pantry case study — design system, built from scratch.
+   Identity: near-black green-tinted base, electric portal-green
+   accent, all-monospace type, faint warp/grain texture.
+   Nothing here is shared with the demo app's stylesheet.
+   ============================================================ */
+
+:root {
+  /* base */
+  --bg: #060a08;
+  --bg-2: #0a100c;
+  --surface: #0d1410;
+  --surface-2: #111a14;
+  --line: rgba(150, 246, 196, 0.14);
+  --line-soft: rgba(150, 246, 196, 0.07);
+
+  /* text */
+  --text: #e9f4ed;
+  --muted: #a3bbae;
+  --faint: #728b7c;
+
+  /* accent — hue is dynamic: dimension chips re-theme the page */
+  --accent-h: 152;
+  --accent: hsl(var(--accent-h) 96% 62%);
+  --accent-soft: hsl(var(--accent-h) 96% 62% / 0.13);
+  --accent-line: hsl(var(--accent-h) 90% 62% / 0.42);
+  --accent-ink: hsl(var(--accent-h) 85% 7%);
+  --accent-deep: hsl(var(--accent-h) 65% 43%);
+
+  /* thermal paper (receipt, placard) */
+  --paper: #f3efe2;
+  --paper-2: #e9e4d2;
+  --ink: #191d18;
+  --ink-soft: #4c534b;
+
+  /* status */
+  --amber: #f2c14e;
+
+  --mono:
+    ui-monospace, "Cascadia Code", "SF Mono", "JetBrains Mono", "Fira Code",
+    Consolas, "Liberation Mono", Menlo, monospace;
+
+  --radius: 14px;
+  --radius-lg: 20px;
+  --shell: 1100px;
+
+  color-scheme: dark;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--mono);
+  font-size: 15px;
+  line-height: 1.65;
+  color: var(--text);
+  background:
+    radial-gradient(1100px 700px at 82% -8%, hsl(165 80% 42% / 0.075), transparent 60%),
+    radial-gradient(900px 640px at -12% 26%, hsl(200 80% 45% / 0.05), transparent 58%),
+    radial-gradient(1200px 900px at 50% 118%, hsl(152 70% 35% / 0.06), transparent 55%),
+    var(--bg);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  overflow-x: hidden;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
+a {
+  color: var(--accent);
+}
+
+::selection {
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  padding: 0;
+}
+
+/* ------------------------------------------------------------- utilities */
+
+.cs-shell {
+  width: min(var(--shell), 100% - 2.5rem);
+  margin-inline: auto;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.cs-skip {
+  position: fixed;
+  top: 0.75rem;
+  left: 0.75rem;
+  z-index: 100;
+  transform: translateY(-300%);
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-weight: 700;
+  padding: 0.55rem 1rem;
+  border-radius: 999px;
+  text-decoration: none;
+  transition: transform 0.2s ease;
+}
+
+.cs-skip:focus-visible {
+  transform: none;
+}
+
+/* fixed grain — pure texture, pointer-events none */
+.cs-grain {
+  position: fixed;
+  inset: -50%;
+  z-index: 4;
+  pointer-events: none;
+  opacity: 0.05;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 240px 240px;
+}
+
+/* ------------------------------------------------------------- sections */
+
+.cs-section {
+  position: relative;
+  padding-block: clamp(4.5rem, 11vh, 7.5rem);
+}
+
+.cs-section + .cs-section {
+  border-top: 1px solid var(--line-soft);
+}
+
+.cs-head {
+  margin-bottom: clamp(1.8rem, 4vh, 2.8rem);
+}
+
+.cs-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin: 0 0 1.1rem;
+  padding: 0.3rem 0.75rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.17em;
+  color: var(--muted);
+  text-transform: uppercase;
+  background: var(--surface);
+}
+
+.cs-eyebrow::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 10px var(--accent);
+}
+
+.cs-h2 {
+  margin: 0;
+  font-size: clamp(1.7rem, 3.8vw, 2.55rem);
+  line-height: 1.12;
+  letter-spacing: -0.015em;
+  font-weight: 800;
+}
+
+.cs-sub {
+  margin: 0.7rem 0 0;
+  color: var(--muted);
+  max-width: 60ch;
+}
+
+/* ------------------------------------------------------------- buttons */
+
+.cs-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.85rem 1.5rem;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 0.95rem;
+  text-decoration: none;
+  line-height: 1.2;
+  transition: transform 0.16s ease, background 0.16s ease, border-color 0.16s ease;
+}
+
+.cs-btn small {
+  display: block;
+  font-size: 0.68rem;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  opacity: 0.75;
+}
+
+.cs-btn-primary {
+  background: var(--accent);
+  color: var(--accent-ink);
+  box-shadow: 0 6px 30px hsl(var(--accent-h) 96% 62% / 0.25);
+}
+
+.cs-btn-primary:hover {
+  transform: translateY(-2px) scale(1.02);
+}
+
+.cs-btn-primary:active {
+  transform: scale(0.98);
+}
+
+.cs-btn-ghost {
+  border: 1px solid var(--line);
+  color: var(--text);
+  background: var(--surface);
+}
+
+.cs-btn-ghost:hover {
+  border-color: var(--accent-line);
+  transform: translateY(-2px);
+}
+
+/* ========================================================== STOREFRONT */
+
+.cs-hero {
+  position: relative;
+  padding-block: clamp(5rem, 14vh, 9rem) clamp(4rem, 10vh, 6.5rem);
+  overflow: clip;
+}
+
+.cs-hero-canvas {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  width: 100%;
+  height: 100%;
+}
+
+.cs-hero-fallback {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    radial-gradient(560px 560px at 50% 30%, hsl(var(--accent-h) 90% 55% / 0.12), transparent 65%);
+}
+
+.cs-hero-brand {
+  display: flex;
+  align-items: center;
+  gap: clamp(1rem, 3vw, 1.8rem);
+  flex-wrap: wrap;
+}
+
+.cs-wordmark {
+  margin: 0;
+  font-size: clamp(2.4rem, 7.2vw, 4.8rem);
+  line-height: 0.98;
+  letter-spacing: 0.02em;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.cs-wordmark .accent {
+  color: var(--accent);
+  text-shadow: 0 0 34px hsl(var(--accent-h) 96% 62% / 0.45);
+}
+
+.cs-ring-spin {
+  transform-origin: 52px 52px;
+  animation: cs-ring-rotate 30s linear infinite;
+}
+
+@keyframes cs-ring-rotate {
+  to { transform: rotate(360deg); }
+}
+
+.cs-hero-tag {
+  margin: 0.85rem 0 0;
+  color: var(--muted);
+  font-size: 1rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.cs-hero-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1.1rem;
+  margin: 1.6rem 0 0;
+  font-size: 0.86rem;
+}
+
+.cs-hero-meta .stars {
+  color: var(--amber);
+  letter-spacing: 0.12em;
+}
+
+.cs-hero-meta .status {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.cs-hero-meta .status::before {
+  content: "●";
+  margin-right: 0.45rem;
+  animation: cs-blink 2.4s ease-in-out infinite;
+}
+
+.cs-hero-meta .note {
+  color: var(--muted);
+}
+
+.cs-meta-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 1.1rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.cs-meta-chips li {
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 0.32rem 0.8rem;
+  font-size: 0.74rem;
+  color: var(--muted);
+  background: var(--surface);
+}
+
+.cs-hero-blurb {
+  max-width: 66ch;
+  margin: 1.9rem 0 0;
+  font-size: 1.02rem;
+  color: var(--text);
+}
+
+.cs-hero-ctas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.9rem;
+  margin-top: 2.1rem;
+}
+
+.cs-fineprint {
+  margin: 1.1rem 0 0;
+  font-size: 0.78rem;
+  color: var(--faint);
+}
+
+@keyframes cs-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+
+/* ================================================================ MENU */
+
+.cs-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  margin: 0 0 0.6rem;
+}
+
+.cs-chip {
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--muted);
+  border-radius: 999px;
+  padding: 0.5rem 1.05rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+}
+
+.cs-chip:hover {
+  border-color: var(--accent-line);
+  color: var(--text);
+}
+
+.cs-chip[aria-pressed="true"] {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-ink);
+}
+
+.cs-chips-hint {
+  margin: 0 0 1.6rem;
+  font-size: 0.76rem;
+  color: var(--faint);
+}
+
+.cs-menu-grid {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.1rem;
+}
+
+@media (max-width: 980px) {
+  .cs-menu-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 620px) {
+  .cs-menu-grid { grid-template-columns: 1fr; }
+}
+
+.cs-dish {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.cs-dish:hover {
+  border-color: var(--accent-line);
+  box-shadow: 0 14px 44px rgba(0, 0, 0, 0.45);
+}
+
+.cs-dish-photo {
+  position: relative;
+  aspect-ratio: 20 / 13;
+  background: var(--bg-2);
+}
+
+.cs-dish-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top center;
+  filter: saturate(0.92);
+}
+
+.cs-dish-stat {
+  position: absolute;
+  top: 0.7rem;
+  right: 0.7rem;
+  background: rgba(4, 8, 6, 0.78);
+  border: 1px solid var(--accent-line);
+  color: var(--accent);
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.24rem 0.6rem;
+  border-radius: 999px;
+  backdrop-filter: blur(6px);
+}
+
+.cs-dish-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  padding: 1rem 1.1rem 1.1rem;
+  flex: 1;
+}
+
+.cs-dish-name {
+  margin: 0;
+  font-size: 1.02rem;
+  font-weight: 800;
+  line-height: 1.3;
+}
+
+.cs-dish-name em {
+  font-style: normal;
+  font-weight: 500;
+  font-size: 0.78rem;
+  color: var(--faint);
+  white-space: nowrap;
+}
+
+.cs-dish-line {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.cs-dish-toggle {
+  align-self: flex-start;
+  margin-top: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: var(--accent);
+  padding: 0.35rem 0;
+}
+
+.cs-dish-toggle::before {
+  content: "+";
+  display: grid;
+  place-items: center;
+  width: 1.15rem;
+  height: 1.15rem;
+  border: 1px solid var(--accent-line);
+  border-radius: 50%;
+  font-weight: 600;
+  transition: transform 0.2s ease;
+}
+
+.cs-dish[data-open="true"] .cs-dish-toggle::before {
+  content: "–";
+  transform: rotate(180deg);
+}
+
+.cs-dish-detail {
+  overflow: hidden;
+}
+
+.cs-dish-detail p {
+  margin: 0.2rem 0 0;
+  padding: 0.75rem 0.9rem;
+  font-size: 0.8rem;
+  line-height: 1.6;
+  color: var(--text);
+  background: var(--accent-soft);
+  border: 1px dashed var(--accent-line);
+  border-radius: 10px;
+}
+
+/* ============================================================= RECEIPT */
+
+.cs-receipt-wrap {
+  display: grid;
+  justify-items: center;
+}
+
+.cs-receipt {
+  width: min(560px, 100%);
+  background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
+  color: var(--ink);
+  padding: 2rem 1.8rem 2.4rem;
+  font-size: 0.86rem;
+  line-height: 1.75;
+  border-radius: 4px;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.06),
+    0 24px 70px rgba(0, 0, 0, 0.55);
+  transform: rotate(-0.5deg);
+  /* perforated top & bottom edges: two full-height notch masks intersected,
+     so only the notches at each edge are punched out. */
+  mask-image:
+    radial-gradient(circle 6px at 50% 0%, transparent 5.5px, #000 6px),
+    radial-gradient(circle 6px at 50% 100%, transparent 5.5px, #000 6px);
+  mask-size: 16px 100%, 16px 100%;
+  mask-position: top center, bottom center;
+  mask-repeat: repeat-x, repeat-x;
+  mask-composite: intersect;
+  -webkit-mask-image:
+    radial-gradient(circle 6px at 50% 0%, transparent 5.5px, #000 6px),
+    radial-gradient(circle 6px at 50% 100%, transparent 5.5px, #000 6px);
+  -webkit-mask-size: 16px 100%, 16px 100%;
+  -webkit-mask-position: top center, bottom center;
+  -webkit-mask-repeat: repeat-x, repeat-x;
+  -webkit-mask-composite: source-in;
+}
+
+.cs-receipt-head {
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  border-bottom: 1.5px dashed var(--ink-soft);
+  padding-bottom: 0.9rem;
+  margin-bottom: 0.9rem;
+}
+
+.cs-receipt-head strong {
+  display: block;
+  font-size: 1.05rem;
+  letter-spacing: 0.2em;
+}
+
+.cs-receipt-head span {
+  display: block;
+  font-size: 0.7rem;
+  color: var(--ink-soft);
+}
+
+.cs-receipt-lines {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.cs-receipt-line {
+  display: grid;
+  grid-template-columns: 1.6rem 1fr auto;
+  gap: 0.5rem;
+  align-items: baseline;
+  padding: 0.18rem 0;
+}
+
+.cs-receipt-line .qty {
+  color: var(--ink-soft);
+}
+
+.cs-receipt-line .item {
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.cs-receipt-line .note {
+  color: var(--ink-soft);
+  font-size: 0.74rem;
+  text-align: right;
+}
+
+.cs-receipt-line[data-zero="true"] .item,
+.cs-receipt-line[data-zero="true"] .qty {
+  text-decoration: line-through;
+  text-decoration-thickness: 1.5px;
+  color: var(--ink-soft);
+}
+
+.cs-receipt-totals {
+  border-top: 1.5px dashed var(--ink-soft);
+  margin-top: 0.9rem;
+  padding-top: 0.9rem;
+}
+
+.cs-receipt-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  font-size: 0.8rem;
+}
+
+.cs-receipt-row .dots {
+  flex: 1;
+  border-bottom: 2px dotted var(--ink-soft);
+  transform: translateY(-4px);
+}
+
+.cs-receipt-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 0.8rem;
+  padding: 0.6rem 0.8rem;
+  background: var(--ink);
+  color: var(--paper);
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  font-size: 0.92rem;
+}
+
+.cs-receipt-punchline {
+  margin: 0.75rem 0 0;
+  text-align: center;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  font-size: 0.78rem;
+}
+
+.cs-receipt-barcode {
+  margin: 1.4rem auto 0.3rem;
+  height: 44px;
+  width: 78%;
+  background: repeating-linear-gradient(
+    90deg,
+    var(--ink) 0 2px,
+    transparent 2px 5px,
+    var(--ink) 5px 6px,
+    transparent 6px 11px,
+    var(--ink) 11px 14px,
+    transparent 14px 17px
+  );
+}
+
+.cs-receipt-footer {
+  text-align: center;
+  font-size: 0.66rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  margin: 0.5rem 0 0;
+}
+
+/* ============================================================= TRACKER */
+
+.cs-tracker {
+  position: relative;
+  display: grid;
+  grid-template-columns: 64px 1fr;
+  max-width: 760px;
+}
+
+.cs-tracker-rail {
+  position: relative;
+}
+
+.cs-tracker-rail svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.cs-track-path {
+  stroke: var(--line);
+  stroke-width: 2;
+  fill: none;
+}
+
+.cs-track-progress {
+  stroke: var(--accent);
+  stroke-width: 2.5;
+  fill: none;
+  filter: drop-shadow(0 0 6px hsl(var(--accent-h) 96% 62% / 0.6));
+}
+
+.cs-track-dot {
+  fill: var(--accent);
+  filter: drop-shadow(0 0 10px hsl(var(--accent-h) 96% 62% / 0.9));
+}
+
+.cs-stops {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(1.6rem, 4vh, 2.6rem);
+}
+
+.cs-stop {
+  position: relative;
+  padding: 0.15rem 0 0;
+  opacity: 0.45;
+  transition: opacity 0.35s ease;
+}
+
+.cs-stop[data-active="true"] {
+  opacity: 1;
+}
+
+.cs-stop-status {
+  margin: 0;
+  font-weight: 800;
+  font-size: 1.02rem;
+  display: flex;
+  align-items: baseline;
+  gap: 0.7rem;
+  flex-wrap: wrap;
+}
+
+.cs-stop-place {
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: var(--accent);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.cs-stop-note {
+  margin: 0.45rem 0 0;
+  max-width: 58ch;
+  font-size: 0.84rem;
+  color: var(--muted);
+}
+
+.cs-detour {
+  margin: 0.4rem 0 0 0;
+  border: 1.5px dashed var(--accent-line);
+  border-radius: var(--radius);
+  background: var(--accent-soft);
+  padding: 0.9rem 1.1rem;
+  max-width: 58ch;
+}
+
+.cs-detour-badge {
+  display: inline-block;
+  font-size: 0.64rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  color: var(--accent-ink);
+  background: var(--accent);
+  border-radius: 4px;
+  padding: 0.14rem 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.cs-detour strong {
+  display: block;
+  font-size: 0.92rem;
+}
+
+.cs-detour p {
+  margin: 0.35rem 0 0;
+  font-size: 0.8rem;
+  color: var(--text);
+}
+
+@media (max-width: 560px) {
+  .cs-tracker { grid-template-columns: 40px 1fr; }
+}
+
+/* ============================================================= REVIEWS */
+
+.cs-reviews-layout {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 1.4rem;
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .cs-reviews-layout { grid-template-columns: 1fr; }
+}
+
+.cs-placard {
+  background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
+  color: var(--ink);
+  border-radius: 8px;
+  padding: 1.5rem 1.4rem 1.3rem;
+  text-align: center;
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.5);
+  transform: rotate(0.6deg);
+  position: sticky;
+  top: 1.5rem;
+}
+
+.cs-placard-heading {
+  margin: 0;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+
+.cs-placard-grade {
+  width: 84px;
+  height: 84px;
+  margin: 0.9rem auto;
+  display: grid;
+  place-items: center;
+  border: 4px solid var(--ink);
+  border-radius: 50%;
+  font-size: 2.6rem;
+  font-weight: 800;
+}
+
+.cs-placard-line {
+  margin: 0;
+  font-weight: 700;
+  font-size: 0.88rem;
+}
+
+.cs-placard-detail {
+  margin: 0.25rem 0 0;
+  font-size: 0.72rem;
+  color: var(--ink-soft);
+}
+
+.cs-placard-inspector {
+  margin: 0.8rem 0 0;
+  padding-top: 0.7rem;
+  border-top: 1.5px dashed var(--ink-soft);
+  font-size: 0.66rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.cs-review-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+@media (max-width: 680px) {
+  .cs-review-list { grid-template-columns: 1fr; }
+}
+
+.cs-review {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 1rem 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.cs-review-stars {
+  color: var(--amber);
+  letter-spacing: 0.14em;
+  font-size: 0.86rem;
+}
+
+.cs-review-body {
+  margin: 0;
+  font-size: 0.88rem;
+  line-height: 1.6;
+}
+
+.cs-review-source {
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.7rem;
+  color: var(--faint);
+}
+
+.cs-review-source::before {
+  content: "✓";
+  display: grid;
+  place-items: center;
+  width: 1rem;
+  height: 1rem;
+  border-radius: 50%;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 0.62rem;
+  font-weight: 800;
+}
+
+.cs-reviews-footnote {
+  margin: 1.1rem 0 0;
+  font-size: 0.74rem;
+  color: var(--faint);
+}
+
+/* =============================================================== ROLES */
+
+.cs-switch {
+  position: relative;
+  display: inline-grid;
+  grid-template-columns: 1fr 1fr;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  padding: 4px;
+  margin-bottom: 1.8rem;
+  isolation: isolate;
+}
+
+.cs-switch-thumb {
+  position: absolute;
+  inset: 4px auto 4px 4px;
+  width: calc(50% - 4px);
+  border-radius: 999px;
+  background: var(--accent);
+  z-index: -1;
+}
+
+.cs-switch button {
+  padding: 0.6rem 1.6rem;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--muted);
+  transition: color 0.18s ease;
+  position: relative;
+}
+
+.cs-switch button[aria-pressed="true"] {
+  color: var(--accent-ink);
+}
+
+.cs-role-panel {
+  display: grid;
+  grid-template-columns: minmax(280px, 380px) 1fr;
+  gap: 1.6rem;
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .cs-role-panel { grid-template-columns: 1fr; }
+}
+
+.cs-role-headline {
+  margin: 0 0 0.9rem;
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--accent);
+}
+
+.cs-role-features {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.cs-role-features li {
+  position: relative;
+  padding-left: 1.5rem;
+  font-size: 0.87rem;
+  color: var(--text);
+}
+
+.cs-role-features li::before {
+  content: "▸";
+  position: absolute;
+  left: 0.2rem;
+  color: var(--accent);
+}
+
+.cs-role-note {
+  margin: 1.1rem 0 0;
+  font-size: 0.76rem;
+  color: var(--faint);
+  border-left: 2px solid var(--accent-line);
+  padding-left: 0.8rem;
+}
+
+.cs-role-shots {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.8rem;
+}
+
+@media (max-width: 560px) {
+  .cs-role-shots { grid-template-columns: 1fr; }
+}
+
+.cs-role-shot {
+  aspect-ratio: 20 / 13;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: var(--bg-2);
+}
+
+.cs-role-shot img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top center;
+}
+
+/* ============================================================ CHECKOUT */
+
+.cs-checkout-layout {
+  display: grid;
+  grid-template-columns: minmax(300px, 460px) 1fr;
+  gap: clamp(1.5rem, 4vw, 3rem);
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .cs-checkout-layout { grid-template-columns: 1fr; }
+}
+
+.cs-summary {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  padding: 1.3rem 1.3rem 1.4rem;
+}
+
+.cs-summary h3 {
+  margin: 0 0 0.9rem;
+  font-size: 0.78rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.cs-summary ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.cs-summary-item {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  font-size: 0.86rem;
+}
+
+.cs-summary-item .tick {
+  width: 1.05rem;
+  height: 1.05rem;
+  flex: none;
+  align-self: center;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+  color: transparent;
+  font-size: 0.62rem;
+  font-weight: 800;
+  transition: background 0.25s ease, color 0.25s ease, border-color 0.25s ease;
+}
+
+.cs-summary-item[data-done="true"] .tick {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-ink);
+}
+
+.cs-summary-item .label {
+  font-weight: 700;
+}
+
+.cs-summary-item .dots {
+  flex: 1;
+  border-bottom: 2px dotted var(--line);
+  transform: translateY(-3px);
+}
+
+.cs-summary-item .detail {
+  color: var(--muted);
+  font-size: 0.76rem;
+  text-align: right;
+}
+
+.cs-summary-total {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 1rem;
+  padding-top: 0.9rem;
+  border-top: 1px dashed var(--line);
+  font-weight: 800;
+  letter-spacing: 0.06em;
+}
+
+.cs-summary-total span:last-child {
+  color: var(--accent);
+}
+
+.cs-checkout-ctas {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  align-items: flex-start;
+}
+
+.cs-order-again {
+  margin-top: 1.6rem;
+  width: 100%;
+}
+
+.cs-order-again h3 {
+  margin: 0 0 0.2rem;
+  font-size: 0.78rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.cs-order-again p.sub {
+  margin: 0 0 0.8rem;
+  font-size: 0.74rem;
+  color: var(--faint);
+}
+
+.cs-order-again ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.cs-order-again a {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem 0.2rem;
+  border-top: 1px solid var(--line-soft);
+  color: var(--text);
+  text-decoration: none;
+  transition: color 0.15s ease, padding-left 0.2s ease;
+}
+
+.cs-order-again a:hover {
+  color: var(--accent);
+  padding-left: 0.6rem;
+}
+
+.cs-order-again a:last-child {
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.cs-order-again .name {
+  font-weight: 700;
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+
+.cs-order-again .note {
+  font-size: 0.74rem;
+  color: var(--muted);
+  text-align: right;
+}
+
+.cs-order-again .arrow {
+  color: var(--accent);
+  flex: none;
+}
+
+.cs-footer {
+  margin-top: clamp(3rem, 8vh, 5rem);
+  padding: 1.6rem 0 2.2rem;
+  border-top: 1px solid var(--line-soft);
+  font-size: 0.74rem;
+  color: var(--faint);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 2rem;
+  justify-content: space-between;
+}
+
+.cs-footer a {
+  color: var(--muted);
+}
+
+/* ========================================================== CART BADGE */
+
+.cs-cart {
+  position: fixed;
+  right: max(1.1rem, env(safe-area-inset-right));
+  bottom: max(1.1rem, env(safe-area-inset-bottom));
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  background: rgba(8, 13, 10, 0.86);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 0.5rem 1.05rem 0.5rem 0.55rem;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.55);
+  color: var(--text);
+}
+
+.cs-cart[data-full="true"] {
+  border-color: var(--accent-line);
+}
+
+.cs-cart-ring {
+  width: 40px;
+  height: 40px;
+  flex: none;
+}
+
+.cs-cart-ring .seg {
+  stroke: var(--line);
+  transition: stroke 0.3s ease;
+}
+
+.cs-cart-ring .seg[data-on="true"] {
+  stroke: var(--accent);
+}
+
+.cs-cart-ring text {
+  fill: var(--text);
+  font-size: 11px;
+  font-weight: 800;
+  font-family: var(--mono);
+}
+
+.cs-cart-copy {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  line-height: 1.25;
+}
+
+.cs-cart-copy .t {
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.cs-cart-copy .h {
+  font-size: 0.66rem;
+  color: var(--muted);
+}
+
+.cs-cart[data-full="true"] .cs-cart-copy .h {
+  color: var(--accent);
+}
+
+.cs-cart-pulse {
+  position: absolute;
+  inset: -1px;
+  border-radius: 999px;
+  border: 1.5px solid var(--accent);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.cs-cart[data-full="true"] .cs-cart-pulse {
+  animation: cs-pulse 2s ease-out infinite;
+}
+
+@keyframes cs-pulse {
+  0% { transform: scale(1); opacity: 0.8; }
+  70% { transform: scale(1.18); opacity: 0; }
+  100% { transform: scale(1.18); opacity: 0; }
+}
+
+/* ================================================= PORTAL WIPE RINGS */
+
+.cs-wipe-ring,
+.cs-grid-wipe {
+  position: absolute;
+  left: 50%;
+  top: 90px;
+  width: 90px;
+  height: 90px;
+  margin-left: -45px;
+  border: 2px solid var(--accent);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 1;
+  will-change: transform, opacity;
+}
+
+.cs-grid-wipe {
+  top: 40%;
+}
+
+.cs-dish[data-highlight="true"] {
+  border-color: var(--accent-line);
+}
+
+/* ===================================================== REDUCED MOTION */
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .cs-stop {
+    opacity: 1;
+  }
+}

@@ -19,9 +19,18 @@ export interface Order {
   total: number;
 }
 
+export interface NewOrderItemInput {
+  restaurantId: string;
+  itemId: string;
+  qty: number;
+}
+
+/**
+ * A new order names dishes and quantities only — the server looks up prices
+ * and computes the total. Client math is never sent, never trusted.
+ */
 export interface NewOrderInput {
-  items: OrderItem[];
-  total: number;
+  items: NewOrderItemInput[];
   dimension: string;
 }
 

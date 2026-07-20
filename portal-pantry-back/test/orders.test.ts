@@ -30,16 +30,15 @@ describe("customer orders", () => {
       .post("/orders")
       .set(bearer(token))
       .send({
-        items: [
-          { restaurantId: "neutrino", name: "Phase-Through Pho", emoji: "🍜", qty: 2, price: 29, restaurant: "Neutrino Noodles" },
-        ],
-        total: 70,
+        items: [{ restaurantId: "neutrino", itemId: "nn1", qty: 2 }],
         dimension: "Ω-77",
       })
       .expect(201);
 
     expect(res.body.order.id).toMatch(/^PP-\d{5}$/);
     expect(res.body.order.status).toBe("pending");
+    // Priced from the catalog: 2 × Phase-Through Pho (29ƶ) + 12ƶ portal toll.
+    expect(res.body.order.total).toBe(70);
 
     const mine = await request(ctx.app).get("/orders").set(bearer(token)).expect(200);
     expect(mine.body.orders).toHaveLength(5);
@@ -59,31 +58,95 @@ describe("customer orders", () => {
     await request(ctx.app)
       .post("/orders")
       .set(bearer(owner))
-      .send({ items: [{ restaurantId: "neutrino", name: "Pho", emoji: "🍜", qty: 1, price: 29, restaurant: "Neutrino Noodles" }], total: 41 })
+      .send({ items: [{ restaurantId: "neutrino", itemId: "nn1", qty: 1 }] })
       .expect(403);
 
     const customer = await customerToken(ctx.app);
     await request(ctx.app)
       .post("/orders")
       .set(bearer(customer))
-      .send({ items: [], total: 10 })
+      .send({ items: [] })
       .expect(422);
+    // A dish that doesn't exist in this reality.
     await request(ctx.app)
       .post("/orders")
       .set(bearer(customer))
-      .send({
-        items: [{ restaurantId: "neutrino", name: "Pho", emoji: "🍜", qty: 1, price: 29, restaurant: "Neutrino Noodles" }],
-        total: -5,
-      })
+      .send({ items: [{ restaurantId: "neutrino", itemId: "ghost-dish", qty: 1 }] })
       .expect(422);
-    // A kitchen that doesn't exist in this reality.
+    // A real dish paired with the wrong kitchen.
     await request(ctx.app)
       .post("/orders")
       .set(bearer(customer))
+      .send({ items: [{ restaurantId: "gargantua", itemId: "nn1", qty: 1 }] })
+      .expect(422);
+  });
+});
+
+describe("server-side pricing", () => {
+  let ctx: TestContext;
+  beforeEach(() => {
+    ctx = createTestApp();
+  });
+
+  it("computes the total from the catalog and ignores client math", async () => {
+    const token = await customerToken(ctx.app);
+    const res = await request(ctx.app)
+      .post("/orders")
+      .set(bearer(token))
       .send({
-        items: [{ restaurantId: "ghost-kitchen", name: "Ectoplasm Soup", emoji: "👻", qty: 1, price: 10, restaurant: "Ghost Kitchen" }],
-        total: 22,
+        // The client claims everything is nearly free. The kitchen disagrees.
+        items: [
+          { restaurantId: "neutrino", itemId: "nn1", qty: 2, price: 0.01 },
+          { restaurantId: "neutrino", itemId: "nn2", qty: 1, price: 0.01 },
+        ],
+        total: 1,
+        dimension: "Ω-77",
       })
+      .expect(201);
+
+    // 2 × Pho (29ƶ) + 1 × Gyoza (21ƶ) + 12ƶ portal toll = 91ƶ.
+    expect(res.body.order.total).toBe(91);
+    const prices = (res.body.order.items as { name: string; price: number }[]).map(
+      (i) => [i.name, i.price],
+    );
+    expect(prices).toEqual([
+      ["Phase-Through Pho", 29],
+      ["Zero-G Gyoza", 21],
+    ]);
+  });
+
+  it("matches the cart to the last ƶ across dimensions", async () => {
+    const token = await customerToken(ctx.app);
+    const carts: { items: { restaurantId: string; itemId: string; qty: number }[]; dimension: string; expected: number }[] = [
+      { items: [{ restaurantId: "gargantua", itemId: "gg1", qty: 1 }], dimension: "C-131", expected: 45 + 12 },
+      { items: [{ restaurantId: "quantum-q", itemId: "qq1", qty: 2 }], dimension: "Ω-77", expected: 64 + 12 },
+      { items: [{ restaurantId: "zorp", itemId: "gz2", qty: 1 }], dimension: "B-612", expected: 33 + 12 },
+      { items: [{ restaurantId: "brined-one", itemId: "bo1", qty: 3 }], dimension: "Pickle-9", expected: 72 + 12 },
+    ];
+    for (const cart of carts) {
+      const res = await request(ctx.app)
+        .post("/orders")
+        .set(bearer(token))
+        .send({ items: cart.items, dimension: cart.dimension })
+        .expect(201);
+      expect(res.body.order.total).toBe(cart.expected);
+      expect(res.body.order.dimension).toBe(cart.dimension);
+    }
+  });
+
+  it("refuses delisted dishes", async () => {
+    const owner = await ownerToken(ctx.app);
+    await request(ctx.app)
+      .patch("/owner/menu-items/nn4")
+      .set(bearer(owner))
+      .send({ delisted: true })
+      .expect(200);
+
+    const customer = await customerToken(ctx.app);
+    await request(ctx.app)
+      .post("/orders")
+      .set(bearer(customer))
+      .send({ items: [{ restaurantId: "neutrino", itemId: "nn4", qty: 1 }] })
       .expect(422);
   });
 });

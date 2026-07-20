@@ -1,7 +1,7 @@
 
 import type { Request } from "express";
 import { z } from "zod";
-import type { Db, OrderRow } from "../db/database.js";
+import type { Db, MenuItemRow, OrderRow } from "../db/database.js";
 import {
   insertOrderWithItems,
   itemsByOrder,
@@ -15,17 +15,20 @@ import { parseBody } from "../lib/validate.js";
 import { authenticate } from "../middleware/auth.js";
 import type { OrderDto } from "../types.js";
 
+/** Flat delivery fee added to every order, in ƶ. Matches the storefront's advertised toll. */
+const PORTAL_TOLL = 12;
+
 const orderItemSchema = z.object({
   restaurantId: z.string().min(1).max(64),
-  name: z.string().min(1).max(120),
+  itemId: z.string().min(1).max(64),
   qty: z.number().int().min(1).max(999),
-  price: z.number().finite().min(0).max(1_000_000),
-  restaurant: z.string().max(80).default(""),
 });
 
 const newOrderSchema = z.object({
   items: z.array(orderItemSchema).max(100).optional(),
-  total: z.number().optional(),
+  // Clients may still send name/price/total; the kitchen prices every line
+  // itself from the catalog, so anything client-priced is ignored.
+  total: z.unknown().optional(),
   dimension: z.string().max(40).optional(),
 });
 
@@ -47,17 +50,35 @@ export function createOrder(db: Db, req: Request, rawBody: unknown): OrderDto {
   if (!body.items || body.items.length === 0) {
     throw new HttpError(422, "An order needs at least one dish.");
   }
-  if (!Number.isFinite(body.total) || (body.total ?? 0) <= 0 || (body.total ?? 0) > 10_000_000) {
-    throw new HttpError(422, "Order total looks non-euclidean.");
-  }
 
-  const kitchenIds = [...new Set(body.items.map((item) => item.restaurantId))];
-  const placeholders = kitchenIds.map(() => "?").join(", ");
-  const known = db
-    .prepare(`SELECT COUNT(*) AS n FROM restaurants WHERE id IN (${placeholders})`)
-    .get(...kitchenIds) as { n: number };
-  if (known.n !== kitchenIds.length) {
-    throw new HttpError(422, "One of those kitchens isn't in this reality.");
+  // Price every line from the catalog. The client's arithmetic is not consulted.
+  const lookupItem = db.prepare(
+    `SELECT m.*, r.name AS restaurant_name
+       FROM menu_items m JOIN restaurants r ON r.id = m.restaurant_id
+      WHERE m.id = ?`,
+  );
+  const pricedItems = body.items.map((line) => {
+    const row = lookupItem.get(line.itemId) as
+      | (MenuItemRow & { restaurant_name: string })
+      | undefined;
+    if (!row || row.restaurant_id !== line.restaurantId) {
+      throw new HttpError(422, "One of those dishes isn't on a menu in this reality.");
+    }
+    if (row.delisted) {
+      throw new HttpError(422, "That dish has been delisted — the menu has moved on.");
+    }
+    return {
+      restaurantId: row.restaurant_id,
+      name: row.name,
+      qty: line.qty,
+      price: row.price,
+      restaurant: row.restaurant_name,
+    };
+  });
+  const subtotal = pricedItems.reduce((sum, item) => sum + item.price * item.qty, 0);
+  const total = subtotal + PORTAL_TOLL;
+  if (total > 10_000_000) {
+    throw new HttpError(422, "Order total looks non-euclidean.");
   }
 
   const order = withTransaction(db, () => {
@@ -73,8 +94,8 @@ export function createOrder(db: Db, req: Request, rawBody: unknown): OrderDto {
       // New orders enter the kitchen's queue as pending.
       status: "pending" as const,
       dimension: (body.dimension ?? "").trim() || user.dimension,
-      items: body.items ?? [],
-      total: body.total ?? 0,
+      items: pricedItems,
+      total,
     };
     insertOrderWithItems(db, record);
     return record;
