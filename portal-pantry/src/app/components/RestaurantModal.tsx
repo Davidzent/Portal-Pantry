@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { CSSProperties } from "react";
 import { Icon } from "./Icon";
+import { Stars } from "./Stars";
 import { CURRENCY, type MenuItem, type Restaurant } from "../data";
 import { addReview, getRestaurantReviews, type Review } from "../api/storeApi";
 import { ApiError, type User } from "../api/authApi";
@@ -17,15 +18,6 @@ interface RestaurantModalProps {
   onClose: () => void;
   onOpenCart: () => void;
   onReviewAdded: () => void;
-}
-
-function Stars({ rating }: { rating: number }) {
-  return (
-    <span className="pp-stars" aria-label={`${rating} out of 5 stars`}>
-      {"★★★★★".slice(0, rating)}
-      <span className="pp-stars-empty">{"★★★★★".slice(rating)}</span>
-    </span>
-  );
 }
 
 function ReviewForm({
@@ -75,7 +67,7 @@ function ReviewForm({
             aria-pressed={rating === n}
             disabled={busy}
           >
-            ★
+            <Icon name="star" size={20} />
           </button>
         ))}
       </div>

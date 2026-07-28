@@ -1,0 +1,177 @@
+/* ==========================================================================
+   Overlays.
+
+   The cart drawer is finished — below 1024px it IS the manifest rail, and it
+   reuses the same `.pp-manifest` markup rather than restating it.
+
+   Everything else here is PROVISIONAL: enough of the primitives to keep the
+   restaurant / checkout / login / history dialogs legible and on-palette while
+   their own passes are pending.
+   ========================================================================== */
+
+.pp-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  padding: var(--pp-gutter);
+  background: rgb(4 6 6 / 0.7);
+  backdrop-filter: blur(3px);
+  overflow-y: auto;
+}
+
+.pp-backdrop--center {
+  align-items: center;
+  justify-content: center;
+}
+
+.pp-backdrop--right {
+  align-items: stretch;
+  justify-content: flex-end;
+  padding: 0;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .pp-backdrop {
+    animation: pp-fade var(--pp-base) var(--pp-ease) both;
+  }
+
+  @keyframes pp-fade {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+}
+
+/* ---- Cart drawer (finished) --------------------------------------------- */
+
+.pp-drawer {
+  display: flex;
+  flex-direction: column;
+  width: min(420px, 100%);
+  max-height: 100svh;
+  overflow-y: auto;
+  background: var(--pp-surface);
+  border-left: 1px solid var(--pp-line-2);
+  box-shadow: var(--pp-e3);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .pp-drawer {
+    animation: pp-drawer-in 300ms var(--pp-ease-out) both;
+  }
+
+  @keyframes pp-drawer-in {
+    from {
+      transform: translateX(32px);
+      opacity: 0;
+    }
+    to {
+      transform: none;
+      opacity: 1;
+    }
+  }
+}
+
+.pp-drawer__head {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--pp-s-3);
+  padding: var(--pp-s-4) var(--pp-s-5);
+  background: var(--pp-surface);
+  border-bottom: 1px solid var(--pp-line);
+}
+
+.pp-drawer__head h2 {
+  font-size: var(--pp-t-20);
+  letter-spacing: -0.015em;
+}
+
+.pp-drawer__alert {
+  margin: var(--pp-s-4) var(--pp-s-5) 0;
+}
+
+/* ---- Provisional dialog shell ------------------------------------------
+   TODO(redesign): restaurant menu, checkout, order history and login each get
+   their own pass. Until then they inherit the surface so they are usable and
+   on-palette, but they are not designed. */
+
+.pp-modal {
+  position: relative;
+  width: min(760px, 100%);
+  margin: auto;
+  padding: var(--pp-s-6);
+  background: var(--pp-surface);
+  border: 1px solid var(--pp-line);
+  border-radius: var(--pp-r-xl);
+  box-shadow: var(--pp-e3), inset 0 1px 0 var(--pp-highlight);
+}
+
+.pp-modal h2 {
+  font-size: var(--pp-t-30);
+}
+
+.pp-modal h3 {
+  font-size: var(--pp-t-20);
+  margin-top: var(--pp-s-5);
+}
+
+.pp-modal p {
+  margin-block: var(--pp-s-2);
+  color: var(--pp-text-2);
+}
+
+.pp-modal ul,
+.pp-modal ol {
+  display: grid;
+  gap: var(--pp-s-4);
+  margin-block: var(--pp-s-4);
+}
+
+.pp-modal li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--pp-s-3);
+}
+
+.pp-modal img {
+  border-radius: var(--pp-r);
+}
+
+.pp-modal input,
+.pp-modal select,
+.pp-modal textarea {
+  width: 100%;
+  min-height: 44px;
+  padding: var(--pp-s-2) var(--pp-s-3);
+  background: var(--pp-well);
+  border: 1px solid var(--pp-line);
+  border-radius: var(--pp-r);
+  color: var(--pp-text);
+}
+
+.pp-close {
+  position: absolute;
+  top: var(--pp-s-4);
+  right: var(--pp-s-4);
+  z-index: 2;
+}
+
+/* Star rows, used by the provisional review UI. */
+.pp-stars {
+  display: inline-flex;
+  gap: 2px;
+  color: var(--pp-yolk);
+}
+
+.pp-stars__off {
+  color: var(--pp-line-2);
+}

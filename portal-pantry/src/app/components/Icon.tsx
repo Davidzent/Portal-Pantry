@@ -14,7 +14,8 @@ export type IconName =
   | "user"
   | "log-out"
   | "utensils"
-  | "check";
+  | "check"
+  | "alert";
 
 interface IconDef {
   node: ReactElement;
@@ -121,6 +122,15 @@ const icons: Record<IconName, IconDef> = {
   check: {
     node: <path d="M20 6 9 17l-5-5" />,
   },
+  alert: {
+    node: (
+      <>
+        <path d="M12 3.2 21.4 19.4a1 1 0 0 1-.87 1.5H3.47a1 1 0 0 1-.87-1.5Z" />
+        <path d="M12 9.4v4.4" />
+        <path d="M12 17.3h.01" />
+      </>
+    ),
+  },
 };
 
 interface IconProps {
@@ -138,7 +148,9 @@ export function Icon({ name, size = 20, className }: IconProps) {
       viewBox="0 0 24 24"
       fill={def.filled ? "currentColor" : "none"}
       stroke={def.filled ? "none" : "currentColor"}
-      strokeWidth={2}
+      /* Slightly heavier than the usual 2 — the icons are drawn with the same
+         pen as the borders, so they need to sit at the same weight. */
+      strokeWidth={2.4}
       strokeLinecap="round"
       strokeLinejoin="round"
       className={className}

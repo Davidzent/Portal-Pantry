@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { CSSProperties } from "react";
 import { Icon } from "./Icon";
+import { Stars } from "./Stars";
 import { PortalMark } from "./PortalMark";
 import {
   categories,
@@ -59,15 +60,6 @@ function formatWhen(iso: string): string {
     month: "short",
     day: "numeric",
   });
-}
-
-function Stars({ rating }: { rating: number }) {
-  return (
-    <span className="pp-stars" aria-label={`${rating} out of 5 stars`}>
-      {"★★★★★".slice(0, rating)}
-      <span className="pp-stars-empty">{"★★★★★".slice(rating)}</span>
-    </span>
-  );
 }
 
 function PhotoButton({

@@ -1,4 +1,11 @@
-const BACKDROP = "#0b0b12";
+/**
+ * Composited behind transparent uploads before re-encoding to WebP, which has
+ * no alpha here. Must track `--pp-well` in styles/tokens.css: this colour gets
+ * baked into the stored image, so a light value would show as a bright halo on
+ * every dark panel it is later placed on. Canvas cannot read a CSS custom property,
+ * so this is the one place the token value is duplicated.
+ */
+const BACKDROP = "#0a0e0f";
 
 export async function fileToWebpDataUrl(
   file: File,

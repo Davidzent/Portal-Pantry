@@ -1,0 +1,143 @@
+/* ==========================================================================
+   Base: reset, document surface, typography defaults.
+   ========================================================================== */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--pp-body);
+  font-size: var(--pp-t-16);
+  font-weight: 400;
+  line-height: 1.6;
+  color: var(--pp-text);
+  background: var(--pp-bg);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* A single very soft pool of light behind the top of the page so the canvas
+   is not a dead flat rectangle. It sits under everything, costs one paint,
+   and is not doing any layout work. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0 0 auto 0;
+  height: 70vh;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(
+      70% 60% at 18% 0%,
+      rgb(70 199 192 / 0.07),
+      transparent 70%
+    ),
+    radial-gradient(
+      50% 55% at 88% 4%,
+      rgb(155 224 90 / 0.05),
+      transparent 72%
+    );
+}
+
+.pp-page {
+  position: relative;
+  z-index: 1;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  margin: 0;
+  font-family: var(--pp-display);
+  font-weight: 700;
+  font-stretch: 96%;
+  line-height: 1.06;
+  letter-spacing: -0.022em;
+  text-wrap: balance;
+}
+
+p {
+  margin: 0;
+}
+
+ul,
+ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+img {
+  display: block;
+  max-width: 100%;
+}
+
+a {
+  color: var(--pp-teal);
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 3px;
+}
+
+a:hover {
+  color: var(--pp-text);
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+::selection {
+  background: var(--pp-portal);
+  color: var(--pp-portal-ink);
+}
+
+/* One focus treatment everywhere. Two rings so it reads on both the dark
+   canvas and on the green fill without changing colour per context. */
+:focus-visible {
+  outline: 2px solid var(--pp-teal);
+  outline-offset: 2px;
+  border-radius: var(--pp-r-sm);
+}
+
+.pp-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.pp-skip {
+  position: absolute;
+  left: var(--pp-s-3);
+  top: var(--pp-s-3);
+  z-index: 60;
+  padding: var(--pp-s-2) var(--pp-s-4);
+  background: var(--pp-surface-3);
+  border: 1px solid var(--pp-line-2);
+  border-radius: var(--pp-r);
+  font-weight: 600;
+  text-decoration: none;
+  color: var(--pp-text);
+  transform: translateY(-250%);
+}
+
+.pp-skip:focus {
+  transform: none;
+}

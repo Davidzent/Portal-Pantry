@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { CSSProperties } from "react";
 import { Icon } from "./components/Icon";
 import { PortalMark } from "./components/PortalMark";
+import { Portal } from "./components/Portal";
+import Manifest from "./components/Manifest";
 import { imageUrl } from "./images";
 import {
   categories,
@@ -34,51 +35,73 @@ function readRoute(): string {
   return window.location.hash.replace(/^#\/?/, "").split(/[/?]/)[0];
 }
 
-function RestaurantCard({
+/** A manifest number, fixed for the session. Paperwork needs a docket number. */
+function newManifestId(): string {
+  return `PP-${Math.floor(1000 + Math.random() * 8999)}-${Math.floor(
+    10 + Math.random() * 89,
+  )}`;
+}
+
+function KitchenCard({
   restaurant,
   onOpen,
 }: {
   restaurant: Restaurant;
   onOpen: () => void;
 }) {
+  const cover = imageUrl(restaurant.image);
+  const toll =
+    restaurant.fee === 0 ? "no toll" : `${restaurant.fee} ${CURRENCY} toll`;
+  /* Without this the computed name is the whole card read end to end, opening
+     with the dimension code and the word "promoted". Lead with the action and
+     the kitchen; keep the rest as supporting detail in the same order it is
+     shown. */
+  const label = `Open ${restaurant.name} — ${restaurant.dimension}, ${
+    restaurant.rating > 0 ? `rated ${restaurant.rating} of 5` : "unrated"
+  }, ${restaurant.time}, ${toll}`;
+
   return (
     <button
       type="button"
-      className="pp-card"
+      className="pp-panel pp-card pp-reveal"
       onClick={onOpen}
-      style={{ "--hue": restaurant.hue } as CSSProperties}
+      aria-label={label}
     >
-      <span className="pp-card-cover">
-        {imageUrl(restaurant.image) ? (
-          <img
-            className="pp-cover-img"
-            src={imageUrl(restaurant.image)}
-            alt=""
-            loading="lazy"
-          />
+      <span className="pp-card__cover">
+        {cover ? (
+          <img src={cover} alt="" loading="lazy" decoding="async" />
         ) : (
-          <span className="pp-card-emoji">
-            <Icon name="utensils" size={44} />
+          <span className="pp-card__cover-blank">
+            <Icon name="utensils" size={22} />
+            No photo on file
           </span>
         )}
-        {restaurant.promoted && <span className="pp-flag">Promoted</span>}
-        <span className="pp-dim-badge">{restaurant.dimension}</span>
+        <span className="pp-card__flags">
+          <span className="pp-tag">{restaurant.dimension}</span>
+          {restaurant.promoted && (
+            <span className="pp-tag pp-tag--note">Paid placement</span>
+          )}
+        </span>
+        <span className="pp-card__portal" aria-hidden="true">
+          <Portal size={34} state="open" />
+        </span>
       </span>
-      <span className="pp-card-body">
-        <span className="pp-card-name">{restaurant.name}</span>
-        <span className="pp-card-tagline">{restaurant.tagline}</span>
-        <span className="pp-card-meta">
-          <span className="pp-rating">
-            <Icon name="star" size={13} />
-            {restaurant.rating > 0 ? restaurant.rating.toFixed(1) : "New"}
+
+      <span className="pp-card__body">
+        <span className="pp-card__name">{restaurant.name}</span>
+        <span className="pp-card__tagline">{restaurant.tagline}</span>
+        <span className="pp-card__meta">
+          <span>
+            <Icon name="star" size={12} />
+            {restaurant.rating > 0 ? restaurant.rating.toFixed(1) : "Unrated"}
           </span>
-          <span className="pp-meta-item">
-            <Icon name="clock" size={13} />
+          <span>
+            <Icon name="clock" size={12} />
             {restaurant.time}
           </span>
-          <span className="pp-meta-item pp-fee">
+          <span className={restaurant.fee === 0 ? "pp-is-free" : undefined}>
             {restaurant.fee === 0
-              ? "Free portal"
+              ? "No toll"
               : `${restaurant.fee}${CURRENCY} toll`}
           </span>
         </span>
@@ -102,6 +125,10 @@ export default function PantryApp() {
   const [placedTotal, setPlacedTotal] = useState(0);
   const [allRestaurants, setAllRestaurants] = useState<Restaurant[]>([]);
   const [catalogLoading, setCatalogLoading] = useState(true);
+  const [catalogError, setCatalogError] = useState<string | null>(null);
+  const [orderError, setOrderError] = useState<string | null>(null);
+  const [placing, setPlacing] = useState(false);
+  const [manifestId] = useState(newManifestId);
 
   const isOwner = user?.role === "owner";
 
@@ -123,15 +150,38 @@ export default function PantryApp() {
 
   useEffect(() => {
     let mounted = true;
-    getRestaurants().then((list) => {
-      if (mounted) {
+    getRestaurants().then(
+      (list) => {
+        if (!mounted) return;
         setAllRestaurants(list);
+        setCatalogError(null);
         setCatalogLoading(false);
-      }
-    });
+      },
+      () => {
+        if (!mounted) return;
+        setCatalogError("catalog");
+        setCatalogLoading(false);
+      },
+    );
     return () => {
       mounted = false;
     };
+  }, []);
+
+  /* Retry path: the only place that flips back into the loading state. */
+  const retryCatalog = useCallback(() => {
+    setCatalogLoading(true);
+    setCatalogError(null);
+    getRestaurants().then(
+      (list) => {
+        setAllRestaurants(list);
+        setCatalogLoading(false);
+      },
+      () => {
+        setCatalogError("catalog");
+        setCatalogLoading(false);
+      },
+    );
   }, []);
 
   const refreshRestaurants = useCallback(async () => {
@@ -210,6 +260,8 @@ export default function PantryApp() {
   const placeOrder = async () => {
     const deliverTo =
       dimension === "All dimensions" ? (user?.dimension ?? "C-131") : dimension;
+    setOrderError(null);
+    setPlacing(true);
     try {
       // The kitchen prices the order; the local `total` is display-only.
       const placed = await createOrder({
@@ -224,9 +276,26 @@ export default function PantryApp() {
       setCart([]);
       setCheckoutOpen(true);
     } catch (err) {
-      window.alert(
-        err instanceof Error ? err.message : "The portal flickered — try again.",
+      // Errors state what happened and what to do next, in the app's voice.
+      // They never apologise, and they never become an OS alert box.
+      setOrderError(
+        err instanceof Error
+          ? err.message
+          : "The portal refused the manifest. Nothing was charged. Try opening it again.",
       );
+      setDrawerOpen(true);
+    } finally {
+      setPlacing(false);
+    }
+  };
+
+  const startCheckout = () => {
+    setDrawerOpen(false);
+    if (user) {
+      void placeOrder();
+    } else {
+      resumeCheckout.current = true;
+      setLoginOpen(true);
     }
   };
 
@@ -241,49 +310,53 @@ export default function PantryApp() {
     );
   }
 
+  const manifest = (
+    <Manifest
+      cart={cart}
+      subtotal={subtotal}
+      dimension={
+        dimension === "All dimensions"
+          ? (user?.dimension ?? "C-131")
+          : dimension
+      }
+      onChangeQty={changeQty}
+      onCheckout={startCheckout}
+      manifestId={manifestId}
+      busy={placing}
+    />
+  );
+
   return (
     <div className="pp-page">
-      <header className="pp-header">
-        <div className="pp-shell pp-header-inner">
+      <a className="pp-skip" href="#board">
+        Skip to the kitchens
+      </a>
+
+      <header className="pp-topbar">
+        <div className="pp-shell pp-topbar__inner">
           <a href={import.meta.env.BASE_URL} className="pp-brand">
             <PortalMark size={36} />
-            <span className="pp-brand-name">
-              Portal<span> Pantry</span>
+            <span className="pp-brand__name">
+              Portal Pantry
+              <span>Licensed interdimensional freight</span>
             </span>
           </a>
 
-          <div className="pp-header-actions">
-            <label className="pp-dim-select">
-              <Icon name="map-pin" size={15} />
-              <select
-                value={dimension}
-                onChange={(e) => setDimension(e.target.value)}
-                aria-label="Delivery dimension"
-              >
-                {dimensions.map((d) => (
-                  <option key={d}>{d}</option>
-                ))}
-              </select>
-              <Icon name="chevron-down" size={14} className="pp-select-arrow" />
-            </label>
-
+          <div className="pp-topbar__actions">
             {user ? (
               <div className="pp-user">
                 <button
                   type="button"
-                  className="pp-user-chip"
+                  className="pp-user__chip"
                   onClick={() => (isOwner ? goManage() : setOrdersOpen(true))}
-                  aria-label={isOwner ? "Open kitchen dashboard" : "View order history"}
-                  title={
-                    isOwner
-                      ? `${user.email} — manage ${user.restaurantName ?? "your kitchen"}`
-                      : `${user.email} — view order history`
-                  }
                 >
-                  <span className="pp-user-avatar" aria-hidden="true">
-                    <Icon name="user" size={16} />
+                  <Icon name="user" size={16} />
+                  {user.name.split(" ")[0]}
+                  <span className="pp-sr">
+                    {isOwner
+                      ? `— manage ${user.restaurantName ?? "your kitchen"}`
+                      : "— open your shipment history"}
                   </span>
-                  <span className="pp-user-name">{user.name.split(" ")[0]}</span>
                 </button>
                 <button
                   type="button"
@@ -298,134 +371,208 @@ export default function PantryApp() {
             ) : (
               <button
                 type="button"
-                className="pp-signin-btn"
+                className="pp-btn"
                 onClick={() => setLoginOpen(true)}
               >
                 <Icon name="user" size={16} />
-                <span className="pp-signin-label">Sign in</span>
+                Sign in
               </button>
             )}
 
             {isOwner ? (
-              <button
-                type="button"
-                className="pp-cart-btn pp-manage-btn"
-                onClick={goManage}
-              >
-                <span className="pp-cart-label">Manage</span>
+              <button type="button" className="pp-btn" onClick={goManage}>
+                Kitchen desk
               </button>
             ) : (
               <button
                 type="button"
-                className="pp-cart-btn"
+                className="pp-btn pp-cartbtn"
                 onClick={() => setDrawerOpen(true)}
-                aria-label={`Open cart, ${cartCount} item${cartCount === 1 ? "" : "s"}`}
               >
-                <Icon name="cart" size={18} />
-                <span className="pp-cart-label">Cart</span>
+                <Icon name="cart" size={16} />
+                Manifest
                 {cartCount > 0 && (
-                  <span className="pp-cart-badge" key={cartCount}>
-                    {cartCount}
-                  </span>
+                  <span className="pp-cartbtn__count">{cartCount}</span>
                 )}
+                <span className="pp-sr">
+                  {cartCount === 0
+                    ? "— nothing declared"
+                    : `— ${cartCount} item${cartCount === 1 ? "" : "s"} declared`}
+                </span>
               </button>
             )}
           </div>
         </div>
       </header>
 
-      <main className="pp-shell pp-main">
+      <main className="pp-shell">
         <section className="pp-hero">
-          <p className="pp-kicker">
-            {user
-              ? isOwner
-                ? `Managing ${user.restaurantName ?? "your kitchen"}`
-                : `Welcome back, ${user.name.split(" ")[0]}!`
-              : "Serving 5 realities since 2847"}
-          </p>
-          <h1 className="pp-h1">
-            Any craving.
-            <br />
-            Any universe.
+          <div className="pp-hero__plate">
+            <span className="pp-tag">Carrier no. PP-0042-D</span>
+            <span className="pp-tag pp-tag--go">Cleared for 5 dimensions</span>
+            <span className="pp-tag pp-tag--bad">Bonded since 2847</span>
+          </div>
+
+          <h1 className="pp-hero__title">
+            Hot meals through <em>cold wormholes</em>
           </h1>
-          <p className="pp-sub">
+
+          <p className="pp-hero__sub">
             {isOwner
-              ? "You're signed in as a kitchen. Browse the storefront, or head to your dashboard to manage orders, money, and reviews."
-              : "Portal-fresh meals from the multiverse's weirdest kitchens — delivered in ~20 minutes, your local causality permitting."}
+              ? `You are signed in as a kitchen. Browse the board, or open the kitchen desk to work your queue, your money and your reviews.`
+              : user
+                ? `Welcome back, ${user.name.split(" ")[0]}. Same paperwork, same ~20 minutes, your local causality.`
+                : "Any craving, any universe, roughly twenty minutes — your local causality. Freight is bonded, insured, and delivered by couriers who have mostly signed the forms."}
           </p>
 
           {isOwner && (
-            <button type="button" className="pp-btn pp-btn-primary" onClick={goManage}>
-              Open kitchen dashboard
-            </button>
+            <p>
+              <button type="button" className="pp-btn" onClick={goManage}>
+                Open the kitchen desk
+              </button>
+            </p>
           )}
 
-          <div className="pp-search">
-            <Icon name="search" size={18} className="pp-search-icon" />
-            <input
-              className="pp-search-input"
-              type="search"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Burgers, broth, questionable jars…"
-              aria-label="Search kitchens"
-            />
-          </div>
+          {/* Destination and search sit together: both are filters on the board,
+              and the chrome should not pretend one of them is navigation. */}
+          <div className="pp-hero__tools">
+            <div className="pp-hero__row">
+              <label className="pp-field pp-field--dim">
+                <Icon name="map-pin" size={16} />
+                <span className="pp-sr">Deliver to dimension</span>
+                <select
+                  value={dimension}
+                  onChange={(e) => setDimension(e.target.value)}
+                >
+                  {dimensions.map((d) => (
+                    <option key={d}>{d}</option>
+                  ))}
+                </select>
+                <Icon name="chevron-down" size={14} />
+              </label>
 
-          <div className="pp-chips" role="group" aria-label="Food category">
-            {categories.map((c) => (
-              <button
-                key={c}
-                type="button"
-                className={`pp-chip${category === c ? " active" : ""}`}
-                aria-pressed={category === c}
-                onClick={() => setCategory(c)}
-              >
-                {c}
-              </button>
-            ))}
+              <label className="pp-field pp-field--search">
+                <Icon name="search" size={18} />
+                <span className="pp-sr">Search kitchens</span>
+                <input
+                  type="search"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="Broth, burgers, unlabelled jars…"
+                />
+              </label>
+            </div>
+
+            <div className="pp-chips" role="group" aria-label="Filter by cargo class">
+              {categories.map((c) => (
+                <button
+                  key={c}
+                  type="button"
+                  className="pp-chip"
+                  aria-pressed={category === c}
+                  onClick={() => setCategory(c)}
+                >
+                  {c}
+                </button>
+              ))}
+            </div>
           </div>
         </section>
 
-        <p className="pp-count" aria-live="polite">
-          {visible.length} kitchen{visible.length === 1 ? "" : "s"} delivering to{" "}
-          <strong>{dimension.toLowerCase()}</strong>
-        </p>
+        <div className="pp-board" id="board">
+          <div className="pp-board__main">
+            <div className="pp-board__head">
+              <p className="pp-board__count" aria-live="polite">
+                <strong>{visible.length}</strong> kitchen
+                {visible.length === 1 ? "" : "s"} cleared for{" "}
+                <strong>{dimension.replace("All dimensions", "all zones")}</strong>
+              </p>
+            </div>
+            <hr className="pp-rule" />
 
-        {catalogLoading ? (
-          <p className="pp-hint">Opening portals to 5 realities…</p>
-        ) : visible.length === 0 ? (
-          <div className="pp-empty">
-            <span className="pp-empty-emoji">
-              <Icon name="search" size={40} />
-            </span>
-            <p>
-              No kitchens found in this reality. Try another dimension — or
-              lower your standards, this is the multiverse.
-            </p>
+            {catalogError ? (
+              <div className="pp-state pp-state--board">
+                <Portal size={88} state="closed" />
+                <p className="pp-state__title">The board went dark</p>
+                <p className="pp-state__body">
+                  We could not reach the depot listing. Nothing you have declared
+                  was lost. Ask for the board again.
+                </p>
+                <button type="button" className="pp-btn" onClick={retryCatalog}>
+                  Request the board again
+                </button>
+              </div>
+            ) : catalogLoading ? (
+              <div className="pp-state pp-state--board">
+                <Portal size={88} state="charging" label="Loading kitchens" />
+                <p className="pp-state__title">Reading the board</p>
+                <p className="pp-state__body">
+                  Checking which kitchens are cleared to ship into your dimension
+                  today.
+                </p>
+              </div>
+            ) : visible.length === 0 ? (
+              <div className="pp-state pp-state--board">
+                <Portal size={88} state="closed" />
+                <p className="pp-state__title">Nothing cleared</p>
+                <p className="pp-state__body">
+                  No kitchen matches that filter in this zone. Widen the
+                  dimension, drop the category, or accept that some realities
+                  simply do not do breakfast.
+                </p>
+                <button
+                  type="button"
+                  className="pp-btn"
+                  onClick={() => {
+                    setCategory("All");
+                    setDimension("All dimensions");
+                    setQuery("");
+                  }}
+                >
+                  Clear the filters
+                </button>
+              </div>
+            ) : (
+              <div className="pp-grid">
+                {visible.map((r) => (
+                  <KitchenCard key={r.id} restaurant={r} onOpen={() => setActive(r)} />
+                ))}
+              </div>
+            )}
           </div>
-        ) : (
-          <div className="pp-grid">
-            {visible.map((r) => (
-              <RestaurantCard key={r.id} restaurant={r} onOpen={() => setActive(r)} />
-            ))}
-          </div>
-        )}
+
+          <aside
+            className="pp-panel pp-panel--inked pp-board__rail"
+            aria-label="Shipping manifest"
+          >
+            {orderError && (
+              <p className="pp-alert">
+                <Icon name="alert" size={18} />
+                {orderError}
+              </p>
+            )}
+            {manifest}
+          </aside>
+        </div>
       </main>
 
       <footer className="pp-footer">
-        <p className="pp-footer-brand">
-          <PortalMark size={20} /> Portal Pantry™
-        </p>
-        <p>
-          Not liable for meals delivered to alternate versions of you ·
-          allergen info varies by reality · couriers are unionized in 3
-          dimensions
-        </p>
-        <p className="pp-footer-credit">
-          A demo by <a href="/">David Guijosa</a> — no real food, portals, or
-          Kevins were harmed
-        </p>
+        <div className="pp-shell pp-footer__inner">
+          <p className="pp-footer__brand">
+            <PortalMark size={22} /> Portal Pantry
+          </p>
+          <p className="pp-footer__fine">
+            § 1 Portal Pantry is a bonded carrier, not a restaurant. § 2 Meals
+            delivered to an alternate version of you are considered delivered.
+            § 3 Allergen information is accurate in the dimension of origin only.
+            § 4 Couriers are unionised in three dimensions and openly hostile in
+            a fourth. § 5 Do not taunt the portal.
+          </p>
+          <p className="pp-footer__fine">
+            A demo by <a href="/">David Guijosa</a>. No real food, portals or
+            couriers were involved.
+          </p>
+        </div>
       </footer>
 
       {active && (
@@ -446,21 +593,9 @@ export default function PantryApp() {
       )}
 
       {drawerOpen && (
-        <CartDrawer
-          cart={cart}
-          subtotal={subtotal}
-          onChangeQty={changeQty}
-          onClose={() => setDrawerOpen(false)}
-          onCheckout={() => {
-            setDrawerOpen(false);
-            if (user) {
-              void placeOrder();
-            } else {
-              resumeCheckout.current = true;
-              setLoginOpen(true);
-            }
-          }}
-        />
+        <CartDrawer onClose={() => setDrawerOpen(false)} error={orderError}>
+          {manifest}
+        </CartDrawer>
       )}
 
       {checkoutOpen && (
