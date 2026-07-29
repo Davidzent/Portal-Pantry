@@ -11,7 +11,9 @@ import {
   type MenuItem,
   type Restaurant,
 } from "./data";
-import RestaurantModal from "./components/RestaurantModal";
+import RestaurantModal, {
+  type PortalOrigin,
+} from "./components/RestaurantModal";
 import CartDrawer from "./components/CartDrawer";
 import CheckoutModal from "./components/CheckoutModal";
 import LoginModal from "./components/LoginModal";
@@ -47,7 +49,7 @@ function KitchenCard({
   onOpen,
 }: {
   restaurant: Restaurant;
-  onOpen: () => void;
+  onOpen: (origin: PortalOrigin) => void;
 }) {
   const cover = imageUrl(restaurant.image);
   const toll =
@@ -64,7 +66,12 @@ function KitchenCard({
     <button
       type="button"
       className="pp-panel pp-card pp-reveal"
-      onClick={onOpen}
+      onClick={(e) => {
+        /* The portal opens from the card's centre, not the cursor — keyboard
+           activation has no cursor, and both paths should look identical. */
+        const r = e.currentTarget.getBoundingClientRect();
+        onOpen({ x: r.left + r.width / 2, y: r.top + r.height / 2 });
+      }}
       aria-label={label}
     >
       <span className="pp-card__cover">
@@ -116,6 +123,7 @@ export default function PantryApp() {
   const [query, setQuery] = useState("");
   const [cart, setCart] = useState<CartEntry[]>([]);
   const [active, setActive] = useState<Restaurant | null>(null);
+  const [portalOrigin, setPortalOrigin] = useState<PortalOrigin | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [user, setUser] = useState<User | null>(null);
@@ -326,8 +334,15 @@ export default function PantryApp() {
     />
   );
 
+  /* Any full-screen overlay makes the storefront behind it inert, so Tab
+     cannot walk out of the dialog into content the user cannot see. Covers
+     every overlay at once rather than trapping focus in each of them. */
+  const overlayOpen =
+    Boolean(active) || drawerOpen || checkoutOpen || ordersOpen || loginOpen;
+
   return (
     <div className="pp-page">
+      <div className="pp-app" inert={overlayOpen || undefined}>
       <a className="pp-skip" href="#board">
         Skip to the kitchens
       </a>
@@ -386,7 +401,7 @@ export default function PantryApp() {
             ) : (
               <button
                 type="button"
-                className="pp-btn pp-cartbtn"
+                className="pp-btn"
                 onClick={() => setDrawerOpen(true)}
               >
                 <Icon name="cart" size={16} />
@@ -535,14 +550,21 @@ export default function PantryApp() {
             ) : (
               <div className="pp-grid">
                 {visible.map((r) => (
-                  <KitchenCard key={r.id} restaurant={r} onOpen={() => setActive(r)} />
+                  <KitchenCard
+                    key={r.id}
+                    restaurant={r}
+                    onOpen={(o) => {
+                      setPortalOrigin(o);
+                      setActive(r);
+                    }}
+                  />
                 ))}
               </div>
             )}
           </div>
 
           <aside
-            className="pp-panel pp-panel--inked pp-board__rail"
+            className="pp-panel pp-board__rail"
             aria-label="Shipping manifest"
           >
             {orderError && (
@@ -574,6 +596,7 @@ export default function PantryApp() {
           </p>
         </div>
       </footer>
+      </div>
 
       {active && (
         <RestaurantModal
@@ -581,6 +604,7 @@ export default function PantryApp() {
           cart={cart}
           canOrder={!isOwner}
           user={user}
+          origin={portalOrigin}
           onAdd={addItem}
           onChangeQty={changeQty}
           onClose={() => setActive(null)}

@@ -24,6 +24,15 @@
   box-shadow: none;
 }
 
+/* ---- Wordmark -----------------------------------------------------------
+   The mark's outer ring strokes with `currentColor`. Pinning it here keeps the
+   ring quiet wherever the mark is placed — the green centre does the talking,
+   and the ring should not compete with adjacent text at full brightness. */
+
+.pp-mark {
+  color: var(--pp-text-3);
+}
+
 /* ---- Divider ------------------------------------------------------------
    One hand-drawn rule survives from the previous pass, used only as the tear
    line in the manifest. Everywhere else a divider is a plain hairline. */
@@ -373,8 +382,10 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 34px;
-  height: 34px;
+  /* 44px, both to hit the touch-target floor and because the stepper replaces
+     an Add button in place — they have to be the same height or the row jumps. */
+  width: 44px;
+  height: 44px;
   padding: 0;
   border: 0;
   background: none;

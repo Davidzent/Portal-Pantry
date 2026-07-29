@@ -106,8 +106,6 @@ const lines = [
   "",
   ":root {",
   `  --ink-rule-a: ${uri(ruleSvg(rule(11), 240))};`,
-  `  --ink-rule-b: ${uri(ruleSvg(rule(29, { amp: 2.1, steps: 6 }), 240))};`,
-  `  --ink-rule-tick: ${uri(ruleSvg(rule(47, { width: 96, amp: 1.1, steps: 4 }), 96))};`,
   "}",
   "",
 ];

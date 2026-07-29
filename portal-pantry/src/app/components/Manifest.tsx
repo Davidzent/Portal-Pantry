@@ -41,7 +41,7 @@ export default function Manifest({
         <h2 className="pp-manifest__title">Manifest</h2>
         <span className="pp-manifest__id">{manifestId}</span>
       </div>
-      <hr className="pp-rule pp-rule--tight" />
+      <hr className="pp-rule" />
 
       {empty ? (
         <div className="pp-state pp-state--rail">
@@ -90,7 +90,7 @@ export default function Manifest({
             ))}
           </ul>
 
-          <hr className="pp-rule pp-rule--b" />
+          <hr className="pp-rule pp-rule--tear" />
 
           <div className="pp-ledger">
             <p className="pp-ledger__row">

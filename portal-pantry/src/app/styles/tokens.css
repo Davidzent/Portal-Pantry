@@ -100,6 +100,10 @@
   --pp-ease: cubic-bezier(0.2, 0, 0.13, 1);
   --pp-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
   --pp-spring: cubic-bezier(0.34, 1.4, 0.64, 1);
+  /* The portal reveal needs its own curve. `--pp-ease-out` is an expo-out: at
+     a third of the duration it is already ~89% done, which makes the opening
+     read as an instant cut followed by a wait. This one grows visibly. */
+  --pp-ease-portal: cubic-bezier(0.5, 0, 0.25, 1);
 
   color-scheme: dark;
   accent-color: var(--pp-portal);
