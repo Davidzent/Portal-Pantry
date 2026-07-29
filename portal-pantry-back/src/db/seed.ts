@@ -32,7 +32,7 @@ export function insertWelcomeOrders(db: Db, userId: string, customerName: string
       customerName,
       placedAt: daysAgo(3, 19, 42),
       status: "delivered",
-      dimension: "Ω-77",
+      dimension: "OMEGA-77",
       items: [
         { restaurantId: "neutrino", name: "Phase-Through Pho", qty: 2, price: 29, restaurant: "Neutrino Noodles" },
         { restaurantId: "neutrino", name: "Zero-G Gyoza", qty: 1, price: 21, restaurant: "Neutrino Noodles" },
@@ -92,16 +92,16 @@ function neutrinoOrders(): OrderRecord[] {
 
   return [
     // Pending — the live queue.
-    { id: "PP-91443", userId: "usr_seed_cust", customerName: "Morty S.", placedAt: minutesAgo(6), status: "pending", dimension: "Ω-77", items: [{ ...pho, qty: 2 }, { ...broth, qty: 1 }], total: 73 },
-    { id: "PP-91380", userId: "usr_seed_cust2", customerName: "Summer S.", placedAt: minutesAgo(18), status: "pending", dimension: "C-131", items: [{ ...gyoza, qty: 3 }, { ...egg, qty: 1 }], total: 87 },
-    { id: "PP-91201", userId: "usr_seed_cust", customerName: "Morty S.", placedAt: minutesAgo(41), status: "pending", dimension: "Ω-77", items: [{ ...pho, qty: 1 }, { ...gyoza, qty: 1 }], total: 62 },
+    { id: "PP-91443", userId: "usr_seed_cust", customerName: "D. Ferris", placedAt: minutesAgo(6), status: "pending", dimension: "OMEGA-77", items: [{ ...pho, qty: 2 }, { ...broth, qty: 1 }], total: 73 },
+    { id: "PP-91380", userId: "usr_seed_cust2", customerName: "N. Okafor", placedAt: minutesAgo(18), status: "pending", dimension: "C-131", items: [{ ...gyoza, qty: 3 }, { ...egg, qty: 1 }], total: 87 },
+    { id: "PP-91201", userId: "usr_seed_cust", customerName: "D. Ferris", placedAt: minutesAgo(41), status: "pending", dimension: "OMEGA-77", items: [{ ...pho, qty: 1 }, { ...gyoza, qty: 1 }], total: 62 },
     // Delivered — the earnings history.
-    { id: "PP-90888", userId: "usr_seed_cust2", customerName: "Summer S.", placedAt: daysAgo(1, 20, 12), status: "delivered", dimension: "Ω-77", items: [{ ...pho, qty: 4 }], total: 128 },
-    { id: "PP-90715", userId: "usr_seed_cust", customerName: "Morty S.", placedAt: daysAgo(2, 12, 40), status: "delivered", dimension: "C-131", items: [{ ...gyoza, qty: 2 }, { ...broth, qty: 2 }, { ...egg, qty: 1 }], total: 72 },
-    { id: "PP-90540", userId: "usr_seed_cust3", customerName: "Birdperson", placedAt: daysAgo(4, 18, 5), status: "delivered", dimension: "B-612", items: [{ ...pho, qty: 3 }, { ...gyoza, qty: 2 }], total: 141 },
-    { id: "PP-90390", userId: "usr_seed_cust3", customerName: "Birdperson", placedAt: daysAgo(6, 19, 33), status: "delivered", dimension: "Ω-77", items: [{ ...pho, qty: 2 }, { ...egg, qty: 2 }], total: 94 },
+    { id: "PP-90888", userId: "usr_seed_cust2", customerName: "N. Okafor", placedAt: daysAgo(1, 20, 12), status: "delivered", dimension: "OMEGA-77", items: [{ ...pho, qty: 4 }], total: 128 },
+    { id: "PP-90715", userId: "usr_seed_cust", customerName: "D. Ferris", placedAt: daysAgo(2, 12, 40), status: "delivered", dimension: "C-131", items: [{ ...gyoza, qty: 2 }, { ...broth, qty: 2 }, { ...egg, qty: 1 }], total: 72 },
+    { id: "PP-90540", userId: "usr_seed_cust3", customerName: "Vantalux", placedAt: daysAgo(4, 18, 5), status: "delivered", dimension: "B-612", items: [{ ...pho, qty: 3 }, { ...gyoza, qty: 2 }], total: 141 },
+    { id: "PP-90390", userId: "usr_seed_cust3", customerName: "Vantalux", placedAt: daysAgo(6, 19, 33), status: "delivered", dimension: "OMEGA-77", items: [{ ...pho, qty: 2 }, { ...egg, qty: 2 }], total: 94 },
     // A hiccup — refunded, so it dents the numbers realistically.
-    { id: "PP-90211", userId: "usr_seed_cust2", customerName: "Summer S.", placedAt: daysAgo(8, 21, 19), status: "wrong-dimension", dimension: "Pickle-9", items: [{ ...pho, qty: 2 }], total: 70 },
+    { id: "PP-90211", userId: "usr_seed_cust2", customerName: "N. Okafor", placedAt: daysAgo(8, 21, 19), status: "wrong-dimension", dimension: "Pickle-9", items: [{ ...pho, qty: 2 }], total: 70 },
   ];
 }
 
@@ -118,10 +118,10 @@ interface SeedUser {
 
 /** Demo accounts. No password hash → any 4+ character password works. */
 const seedUsers: SeedUser[] = [
-  { id: "usr_seed_owner", email: "owner@neutrino.pp", name: "Noodle Boss", avatar: "", dimension: "Ω-77", memberSince: "2839", role: "owner", restaurantId: OWNER_RESTAURANT_ID },
-  { id: "usr_seed_cust", email: "morty@citadel.pp", name: "Morty S.", avatar: "", dimension: "Ω-77", memberSince: "2841", role: "customer" },
-  { id: "usr_seed_cust2", email: "summer@citadel.pp", name: "Summer S.", avatar: "", dimension: "C-131", memberSince: "2842", role: "customer" },
-  { id: "usr_seed_cust3", email: "birdperson@birdworld.pp", name: "Birdperson", avatar: "", dimension: "B-612", memberSince: "2840", role: "customer" },
+  { id: "usr_seed_owner", email: "owner@neutrino.pp", name: "Noodle Boss", avatar: "", dimension: "OMEGA-77", memberSince: "2839", role: "owner", restaurantId: OWNER_RESTAURANT_ID },
+  { id: "usr_seed_cust", email: "dferris@meridian-9.pp", name: "D. Ferris", avatar: "", dimension: "OMEGA-77", memberSince: "2841", role: "customer" },
+  { id: "usr_seed_cust2", email: "nokafor@meridian-9.pp", name: "N. Okafor", avatar: "", dimension: "C-131", memberSince: "2842", role: "customer" },
+  { id: "usr_seed_cust3", email: "vantalux@auldperch.pp", name: "Vantalux", avatar: "", dimension: "B-612", memberSince: "2840", role: "customer" },
 ];
 
 interface SeedReview {
@@ -142,38 +142,38 @@ function seedReviews(): SeedReview[] {
     {
       id: "rev_1",
       restaurantId: "neutrino",
-      author: "Rick S.",
+      author: "A. Trembley",
       avatar: "",
       rating: 5,
-      body: "The Phase-Through Pho literally passed through me and I STILL think about it. *burp* That's science, baby. Ten stars, your form only allows five.",
+      body: "The Phase-Through Pho passed through me entirely and I am still thinking about it. Your form allows five stars. It should allow more.",
       createdAt: daysAgo(2, 22, 14),
-      reply: "Thanks Rick. Genuinely begging you to stop bringing the portal gun into the dining area though.",
+      reply: "Appreciated. We would ask you to stop opening your own portals in the dining area, but we know how that goes.",
       repliedAt: daysAgo(2, 23, 1),
     },
     {
       id: "rev_2",
       restaurantId: "neutrino",
-      author: "Morty S.",
+      author: "D. Ferris",
       avatar: "",
       rating: 4,
-      body: "Aw geez, the Zero-G Gyoza floated right off my plate a-and I had to chase them around the ship, but they were r-really good, so, y'know, four stars.",
+      body: "The Zero-G Gyoza floated off the plate and I chased them the length of the ship. Excellent dumplings. Four stars, docked one for the cardio.",
       createdAt: daysAgo(5, 13, 40),
     },
     {
       id: "rev_3",
       restaurantId: "neutrino",
-      author: "Birdperson",
+      author: "Vantalux",
       avatar: "",
       rating: 5,
       body: "In my culture, Antimatter Broth is served only at weddings and funerals. This bowl honored both traditions with dignity.",
       createdAt: daysAgo(7, 9, 5),
-      reply: "It is an honor to feed you, Birdperson.",
+      reply: "It is an honour to feed you, Vantalux.",
       repliedAt: daysAgo(7, 10, 22),
     },
     {
       id: "rev_4",
       restaurantId: "neutrino",
-      author: "Summer S.",
+      author: "N. Okafor",
       avatar: "",
       rating: 3,
       body: "The Neutron Star Egg cracked my table in half. Kind of iconic honestly but three stars because now I eat on the floor.",
@@ -182,10 +182,10 @@ function seedReviews(): SeedReview[] {
     {
       id: "rev_5",
       restaurantId: "neutrino",
-      author: "Squanchy",
+      author: "Brill Nakato",
       avatar: "",
       rating: 4,
-      body: "Great spot to really squanch a warm bowl of noodles in peace. Cozy lighting, no questions asked. That's all a guy needs.",
+      body: "A warm bowl of noodles, low light, and nobody asking what I am. That is the entire review.",
       createdAt: daysAgo(12, 1, 30),
     },
   ];

@@ -455,25 +455,6 @@
   font-variant-numeric: tabular-nums;
 }
 
-.pp-ledger {
-  display: grid;
-  gap: var(--pp-s-2);
-  font-size: var(--pp-t-13);
-  color: var(--pp-text-3);
-}
-
-.pp-ledger__row {
-  display: flex;
-  justify-content: space-between;
-  gap: var(--pp-s-3);
-}
-
-.pp-ledger__row span:last-child {
-  font-family: var(--pp-utility);
-  font-variant-numeric: tabular-nums;
-  color: var(--pp-text-2);
-}
-
 /* The total is where money becomes real. Green earns it here. */
 .pp-total {
   display: flex;

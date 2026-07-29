@@ -54,7 +54,7 @@ export const seedCatalog: SeedRestaurant[] = [
     
     tagline: "Simultaneously cheesy and not. You decide by observing.",
     category: "Human food",
-    dimension: "Ω-77",
+    dimension: "OMEGA-77",
     rating: 4.5,
     time: "10–20 min",
     fee: 8,
@@ -72,7 +72,7 @@ export const seedCatalog: SeedRestaurant[] = [
     
     tagline: "Ramen so light it phases through you. Zero calories, zero mercy.",
     category: "Alien delicacies",
-    dimension: "Ω-77",
+    dimension: "OMEGA-77",
     rating: 4.8,
     time: "8–14 min",
     fee: 5,

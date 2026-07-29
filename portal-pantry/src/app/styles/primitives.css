@@ -13,17 +13,6 @@
   box-shadow: var(--pp-e1), inset 0 1px 0 var(--pp-highlight);
 }
 
-.pp-panel--raised {
-  background: var(--pp-surface-2);
-  box-shadow: var(--pp-e2), inset 0 1px 0 var(--pp-highlight);
-}
-
-.pp-panel--flush {
-  border-radius: 0;
-  border: 0;
-  box-shadow: none;
-}
-
 /* ---- Wordmark -----------------------------------------------------------
    The mark's outer ring strokes with `currentColor`. Pinning it here keeps the
    ring quiet wherever the mark is placed — the green centre does the talking,
@@ -120,14 +109,11 @@
   background: var(--pp-surface-2);
 }
 
-.pp-btn--danger {
-  background: var(--pp-salmon-fill);
-  border-color: var(--pp-salmon);
-  color: var(--pp-salmon);
-}
-
 .pp-btn--sm {
-  min-height: 36px;
+  /* "Small" is font size and padding, not target size. 36px broke the 44px
+     floor everywhere this was used, so the class stays visually lighter while
+     still being a legal target. */
+  min-height: 44px;
   padding: var(--pp-s-2) var(--pp-s-3);
   font-size: var(--pp-t-13);
   border-radius: var(--pp-r-sm);
@@ -374,17 +360,55 @@
   color: var(--pp-text-3);
 }
 
-.pp-num {
-  font-family: var(--pp-utility);
-  font-weight: 600;
-  font-variant-numeric: tabular-nums;
-}
-
 .pp-fine {
   font-family: var(--pp-utility);
   font-size: var(--pp-t-12);
   line-height: 1.6;
   color: var(--pp-text-3);
+}
+
+/* ---- Ledger: a column of labelled amounts -------------------------------
+   Shared by the customer's manifest and the owner's payout breakdown. They
+   are the same object, so they are the same component. */
+
+.pp-ledger {
+  display: grid;
+  gap: var(--pp-s-2);
+  font-size: var(--pp-t-13);
+  color: var(--pp-text-3);
+}
+
+.pp-ledger__row {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--pp-s-3);
+}
+
+.pp-ledger__row span:last-child {
+  font-family: var(--pp-utility);
+  font-variant-numeric: tabular-nums;
+  color: var(--pp-text-2);
+}
+
+/* A deduction. Salmon because money leaving is where the eye should snag. */
+.pp-ledger__row--neg span:last-child {
+  color: var(--pp-salmon);
+}
+
+/* What actually lands in the account. Green: it is the payout. */
+.pp-ledger__row--total {
+  margin-top: var(--pp-s-2);
+  padding-top: var(--pp-s-3);
+  border-top: 1px solid var(--pp-line-2);
+  font-size: var(--pp-t-15);
+  font-weight: 600;
+  color: var(--pp-text);
+}
+
+.pp-ledger__row--total span:last-child {
+  font-size: var(--pp-t-18);
+  font-weight: 700;
+  color: var(--pp-portal-text);
 }
 
 /* ---- Notice strips ------------------------------------------------------ */

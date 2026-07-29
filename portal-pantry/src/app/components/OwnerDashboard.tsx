@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { CSSProperties } from "react";
 import { Icon } from "./Icon";
 import { Stars } from "./Stars";
+import { Portal } from "./Portal";
 import { PortalMark } from "./PortalMark";
 import {
   categories,
@@ -29,20 +29,22 @@ import {
   type Review,
 } from "../api/storeApi";
 
-type Tab = "menu" | "orders" | "money" | "reviews";
+type Tab = "queue" | "dishes" | "payout" | "reports";
 
 const TABS: { id: Tab; label: string }[] = [
-  { id: "menu", label: "Menu" },
-  { id: "orders", label: "Orders" },
-  { id: "money", label: "Money" },
-  { id: "reviews", label: "Reviews" },
+  { id: "queue", label: "Queue" },
+  { id: "dishes", label: "Dishes" },
+  { id: "payout", label: "Payout" },
+  { id: "reports", label: "Reports" },
 ];
 
-const STATUS_LABEL: Record<OwnerOrder["status"], string> = {
-  pending: "Pending",
-  delivered: "Delivered",
-  "wrong-dimension": "Wrong dimension",
-  lost: "Lost · refunded",
+/* Same vocabulary the customer sees in their shipment record — an order does
+   not change its name because you are looking at it from the kitchen. */
+const STATUS: Record<OwnerOrder["status"], { label: string; tone: string }> = {
+  pending: { label: "In transit", tone: "pp-tag--note" },
+  delivered: { label: "Delivered", tone: "pp-tag--go" },
+  "wrong-dimension": { label: "Misrouted", tone: "pp-tag--bad" },
+  lost: { label: "Lost · refunded", tone: "pp-tag--bad" },
 };
 
 function money(n: number): string {
@@ -50,8 +52,7 @@ function money(n: number): string {
 }
 
 function formatWhen(iso: string): string {
-  const then = new Date(iso).getTime();
-  const mins = Math.round((Date.now() - then) / 60000);
+  const mins = Math.round((Date.now() - new Date(iso).getTime()) / 60000);
   if (mins < 1) return "just now";
   if (mins < 60) return `${mins} min ago`;
   const hrs = Math.round(mins / 60);
@@ -60,6 +61,15 @@ function formatWhen(iso: string): string {
     month: "short",
     day: "numeric",
   });
+}
+
+function DeskLoading({ label }: { label: string }) {
+  return (
+    <div className="pp-state">
+      <Portal size={64} state="charging" label={label} />
+      <p className="pp-state__body">{label}</p>
+    </div>
+  );
 }
 
 function PhotoButton({
@@ -96,17 +106,17 @@ function PhotoButton({
       />
       <button
         type="button"
-        className="pp-btn pp-btn-ghost pp-btn-sm"
+        className="pp-btn pp-btn--quiet pp-btn--sm"
         disabled={disabled || busy}
         onClick={() => inputRef.current?.click()}
       >
-        {busy ? "Processing…" : label}
+        {busy ? "Re-encoding…" : label}
       </button>
     </>
   );
 }
 
-function MenuItemEditor({
+function DishEditor({
   item,
   onSaved,
 }: {
@@ -148,7 +158,11 @@ function MenuItemEditor({
       setFlash(true);
       window.setTimeout(() => setFlash(false), 1600);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Save failed — try again.");
+      setError(
+        err instanceof ApiError
+          ? err.message
+          : "The change did not save. Nothing was altered. Try again.",
+      );
     } finally {
       setBusy(false);
     }
@@ -161,7 +175,7 @@ function MenuItemEditor({
       await updateOwnerMenuItem(item.id, { delisted: !item.delisted });
       await onSaved();
     } catch {
-      setError("Couldn't update the listing — try again.");
+      setError("The listing did not change. Try again.");
     } finally {
       setBusy(false);
     }
@@ -174,7 +188,7 @@ function MenuItemEditor({
       await updateOwnerMenuItem(item.id, { image: dataUrl });
       await onSaved();
     } catch {
-      setError("Couldn't save the photo — try a smaller image.");
+      setError("The photo did not save. A smaller image will go through.");
     } finally {
       setBusy(false);
     }
@@ -190,70 +204,93 @@ function MenuItemEditor({
     }
   };
 
+  const photo = imageUrl(item.image);
+
   return (
-    <li className={`pp-edit-item${item.delisted ? " delisted" : ""}`}>
-      <span className="pp-item-tile" aria-hidden="true">
-        {imageUrl(item.image) ? (
-          <img className="pp-item-tile-img" src={imageUrl(item.image)} alt="" />
+    <li
+      className={`pp-panel pp-dish${item.delisted ? " pp-dish--delisted" : ""}`}
+    >
+      <span className="pp-dish__thumb">
+        {photo ? (
+          <img src={photo} alt="" />
         ) : (
-          <Icon name="utensils" size={22} />
+          <Icon name="utensils" size={22} aria-hidden="true" />
         )}
       </span>
-      <div className="pp-edit-fields">
-        <input
-          className="pp-edit-name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          disabled={busy}
-          aria-label={`Dish name (currently ${item.name})`}
-        />
-        <textarea
-          className="pp-edit-desc"
-          value={desc}
-          onChange={(e) => setDesc(e.target.value)}
-          disabled={busy}
-          rows={2}
-          aria-label={`Description for ${item.name}`}
-        />
-        <div className="pp-edit-row2">
-          <span className="pp-edit-field-inline">
-            <label>Price</label>
-            <span className="pp-edit-price">
+
+      <div className="pp-dish__fields">
+        <label className="pp-form-row">
+          <span className="pp-field-label">Dish</span>
+          <span className="pp-field">
+            <input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              disabled={busy}
+            />
+          </span>
+        </label>
+
+        <label className="pp-form-row">
+          <span className="pp-field-label">Description</span>
+          <textarea
+            className="pp-textarea"
+            value={desc}
+            onChange={(e) => setDesc(e.target.value)}
+            disabled={busy}
+          />
+        </label>
+
+        <div className="pp-dish__row">
+          <label className="pp-form-row pp-form-row--tight">
+            <span className="pp-field-label">Price</span>
+            <span className="pp-field">
               <input
                 type="number"
                 min="1"
                 value={price}
                 onChange={(e) => setPrice(e.target.value)}
                 disabled={busy}
-                aria-label={`Price for ${item.name} in zeeps`}
               />
-              <span aria-hidden="true">{CURRENCY}</span>
+              <span className="pp-field__unit" aria-hidden="true">
+                {CURRENCY}
+              </span>
             </span>
-          </span>
-          <span className="pp-edit-field-inline">
-            <label>Prep</label>
-            <span className="pp-edit-price">
+          </label>
+          <label className="pp-form-row pp-form-row--tight">
+            <span className="pp-field-label">Prep</span>
+            <span className="pp-field">
               <input
                 type="number"
                 min="1"
                 value={prep}
                 onChange={(e) => setPrep(e.target.value)}
                 disabled={busy}
-                aria-label={`Prep time for ${item.name} in minutes`}
               />
-              <span aria-hidden="true">min</span>
+              <span className="pp-field__unit" aria-hidden="true">
+                min
+              </span>
             </span>
-          </span>
-          {item.delisted && <span className="pp-delisted-badge">Delisted</span>}
+          </label>
+          {item.delisted && (
+            <span className="pp-tag pp-tag--bad">Off the board</span>
+          )}
         </div>
-        <div className="pp-edit-photo">
+
+        {error && (
+          <p className="pp-alert" role="alert">
+            <Icon name="alert" size={18} />
+            {error}
+          </p>
+        )}
+
+        <div className="pp-dish__actions">
           <PhotoButton
             maxEdge={800}
-            label={imageUrl(item.image) ? "Change photo" : "Add photo"}
+            label={photo ? "Replace photo" : "Add photo"}
             onPicked={changePhoto}
             disabled={busy}
           />
-          {imageUrl(item.image) && (
+          {photo && (
             <button
               type="button"
               className="pp-btn-link"
@@ -263,43 +300,37 @@ function MenuItemEditor({
               Remove photo
             </button>
           )}
+          <span className="pp-spacer" />
+          <button
+            type="button"
+            className="pp-btn-link"
+            onClick={toggleDelist}
+            disabled={busy}
+          >
+            {item.delisted ? "Put back on the board" : "Take off the board"}
+          </button>
+          <button
+            type="button"
+            className="pp-btn pp-btn--sm"
+            onClick={save}
+            disabled={busy || !dirty}
+          >
+            {flash ? (
+              <>
+                <Icon name="check" size={14} />
+                Saved
+              </>
+            ) : (
+              "Save"
+            )}
+          </button>
         </div>
-        {error && (
-          <p className="pp-edit-error" role="alert">
-            {error}
-          </p>
-        )}
-      </div>
-      <div className="pp-edit-actions">
-        <button
-          type="button"
-          className="pp-btn pp-btn-primary pp-btn-sm"
-          onClick={save}
-          disabled={busy || !dirty}
-        >
-          {flash ? (
-            <>
-              <Icon name="check" size={14} />
-              Saved
-            </>
-          ) : (
-            "Save"
-          )}
-        </button>
-        <button
-          type="button"
-          className="pp-btn-link"
-          onClick={toggleDelist}
-          disabled={busy}
-        >
-          {item.delisted ? "Relist" : "Delist"}
-        </button>
       </div>
     </li>
   );
 }
 
-function AddDishForm({ onAdded }: { onAdded: () => Promise<void> }) {
+function AddDish({ onAdded }: { onAdded: () => Promise<void> }) {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [desc, setDesc] = useState("");
@@ -334,7 +365,9 @@ function AddDishForm({ onAdded }: { onAdded: () => Promise<void> }) {
       setOpen(false);
     } catch (err) {
       setError(
-        err instanceof ApiError ? err.message : "Couldn't add the dish — try again.",
+        err instanceof ApiError
+          ? err.message
+          : "The dish was not added. Nothing was filed. Try again.",
       );
     } finally {
       setBusy(false);
@@ -343,112 +376,122 @@ function AddDishForm({ onAdded }: { onAdded: () => Promise<void> }) {
 
   if (!open) {
     return (
-      <button
-        type="button"
-        className="pp-btn pp-btn-primary pp-add-dish-btn"
-        onClick={() => setOpen(true)}
-      >
-        <Icon name="plus" size={15} /> Add a dish
+      <button type="button" className="pp-btn" onClick={() => setOpen(true)}>
+        <Icon name="plus" size={15} /> Declare a dish
       </button>
     );
   }
 
   return (
-    <div className="pp-add-dish">
-      <div className="pp-edit-item">
-        <span className="pp-item-tile" aria-hidden="true">
-          {image ? (
-            <img className="pp-item-tile-img" src={image} alt="" />
-          ) : (
-            <Icon name="utensils" size={22} />
-          )}
-        </span>
-        <div className="pp-edit-fields">
-          <div className="pp-edit-row2">
-            <PhotoButton
-              maxEdge={800}
-              label={image ? "Change photo" : "Add photo"}
-              onPicked={setImage}
+    <div className="pp-panel pp-dish">
+      <span className="pp-dish__thumb">
+        {image ? (
+          <img src={image} alt="" />
+        ) : (
+          <Icon name="utensils" size={22} aria-hidden="true" />
+        )}
+      </span>
+
+      <div className="pp-dish__fields">
+        <label className="pp-form-row">
+          <span className="pp-field-label">Dish</span>
+          <span className="pp-field">
+            <input
+              autoFocus
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Name as it appears on the board"
               disabled={busy}
             />
-          </div>
-          <input
-            className="pp-edit-name"
-            placeholder="Dish name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            disabled={busy}
-          />
+          </span>
+        </label>
+
+        <label className="pp-form-row">
+          <span className="pp-field-label">Description</span>
           <textarea
-            className="pp-edit-desc"
-            placeholder="Description"
-            rows={2}
+            className="pp-textarea"
             value={desc}
             onChange={(e) => setDesc(e.target.value)}
+            placeholder="What it is, and anything a customs officer would want to know."
             disabled={busy}
           />
-          <div className="pp-edit-row2">
-            <span className="pp-edit-field-inline">
-              <label>Price</label>
-              <span className="pp-edit-price">
-                <input
-                  type="number"
-                  min="1"
-                  placeholder="0"
-                  value={price}
-                  onChange={(e) => setPrice(e.target.value)}
-                  disabled={busy}
-                />
-                <span aria-hidden="true">{CURRENCY}</span>
+        </label>
+
+        <div className="pp-dish__row">
+          <label className="pp-form-row pp-form-row--tight">
+            <span className="pp-field-label">Price</span>
+            <span className="pp-field">
+              <input
+                type="number"
+                min="1"
+                placeholder="0"
+                value={price}
+                onChange={(e) => setPrice(e.target.value)}
+                disabled={busy}
+              />
+              <span className="pp-field__unit" aria-hidden="true">
+                {CURRENCY}
               </span>
             </span>
-            <span className="pp-edit-field-inline">
-              <label>Prep</label>
-              <span className="pp-edit-price">
-                <input
-                  type="number"
-                  min="1"
-                  value={prep}
-                  onChange={(e) => setPrep(e.target.value)}
-                  disabled={busy}
-                />
-                <span aria-hidden="true">min</span>
+          </label>
+          <label className="pp-form-row pp-form-row--tight">
+            <span className="pp-field-label">Prep</span>
+            <span className="pp-field">
+              <input
+                type="number"
+                min="1"
+                value={prep}
+                onChange={(e) => setPrep(e.target.value)}
+                disabled={busy}
+              />
+              <span className="pp-field__unit" aria-hidden="true">
+                min
               </span>
             </span>
-          </div>
-          {error && (
-            <p className="pp-edit-error" role="alert">
-              {error}
-            </p>
-          )}
+          </label>
         </div>
-      </div>
-      <div className="pp-add-dish-actions">
-        <button
-          type="button"
-          className="pp-btn-link"
-          onClick={() => {
-            reset();
-            setOpen(false);
-          }}
-          disabled={busy}
-        >
-          Cancel
-        </button>
-        <button
-          type="button"
-          className="pp-btn pp-btn-primary pp-btn-sm"
-          onClick={submit}
-          disabled={busy || !name.trim() || !price}
-        >
-          {busy ? "Adding…" : "Add dish"}
-        </button>
+
+        {error && (
+          <p className="pp-alert" role="alert">
+            <Icon name="alert" size={18} />
+            {error}
+          </p>
+        )}
+
+        <div className="pp-dish__actions">
+          <PhotoButton
+            maxEdge={800}
+            label={image ? "Replace photo" : "Add photo"}
+            onPicked={setImage}
+            disabled={busy}
+          />
+          <span className="pp-spacer" />
+          <button
+            type="button"
+            className="pp-btn-link"
+            onClick={() => {
+              reset();
+              setOpen(false);
+            }}
+            disabled={busy}
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            className="pp-btn"
+            onClick={submit}
+            disabled={busy || !name.trim() || !price}
+          >
+            {busy ? "Filing…" : "Add to the board"}
+          </button>
+        </div>
       </div>
     </div>
   );
 }
 
-function MenuTab({
+function DishesTab({
   store,
   reload,
 }: {
@@ -490,7 +533,11 @@ function MenuTab({
       setFlash(true);
       window.setTimeout(() => setFlash(false), 1600);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Save failed — try again.");
+      setError(
+        err instanceof ApiError
+          ? err.message
+          : "The details did not save. Try again.",
+      );
     } finally {
       setBusy(false);
     }
@@ -503,7 +550,7 @@ function MenuTab({
       await updateOwnerRestaurant({ image: dataUrl });
       await reload();
     } catch {
-      setError("Couldn't save the photo — try a smaller image.");
+      setError("The photo did not save. A smaller image will go through.");
     } finally {
       setBusy(false);
     }
@@ -519,132 +566,164 @@ function MenuTab({
     }
   };
 
-  const bannerUrl = imageUrl(store.image);
+  const banner = imageUrl(store.image);
+  const listed = store.items.filter((i) => !i.delisted).length;
 
   return (
-    <div className="pp-dash-panel">
-      <div className="pp-store-form">
-        <div className="pp-store-photo">
-          <div
-            className="pp-store-photo-preview"
-            style={{ "--hue": store.hue } as CSSProperties}
-          >
-            {bannerUrl ? (
-              <img src={bannerUrl} alt="" />
-            ) : (
-              <span>
-                <Icon name="utensils" size={40} />
-              </span>
-            )}
-          </div>
-          <div className="pp-store-photo-actions">
-            <span className="pp-field-label">Restaurant photo</span>
-            <div className="pp-photo-btns">
+    <div className="pp-desk__panel">
+      <section className="pp-block">
+        <div className="pp-block__head">
+          <h3>Storefront</h3>
+          <span className="pp-block__hint">How the board lists you</span>
+        </div>
+
+        <div className="pp-panel pp-settings">
+          <div className="pp-settings__photo">
+            <span className="pp-settings__preview">
+              {banner ? (
+                <img src={banner} alt="" />
+              ) : (
+                <Icon name="utensils" size={28} aria-hidden="true" />
+              )}
+            </span>
+            <div className="pp-settings__actions">
               <PhotoButton
                 maxEdge={1440}
-                label={bannerUrl ? "Change photo" : "Upload photo"}
+                label={banner ? "Replace photo" : "Upload photo"}
                 onPicked={setPhoto}
                 disabled={busy}
               />
-              {bannerUrl && (
+              {banner && (
                 <button
                   type="button"
                   className="pp-btn-link"
                   onClick={removePhoto}
                   disabled={busy}
                 >
-                  Remove
+                  Remove photo
                 </button>
               )}
             </div>
           </div>
-        </div>
 
-        <label className="pp-field">
-          <span>Kitchen name</span>
-          <input value={name} onChange={(e) => setName(e.target.value)} disabled={busy} />
-        </label>
-        <label className="pp-field">
-          <span>Tagline</span>
-          <input
-            value={tagline}
-            onChange={(e) => setTagline(e.target.value)}
-            disabled={busy}
-          />
-        </label>
-        <div className="pp-store-row">
-          <label className="pp-field">
-            <span>Category</span>
-            <select
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-              disabled={busy}
-            >
-              {categories
-                .filter((c) => c !== "All")
-                .map((c) => (
-                  <option key={c}>{c}</option>
-                ))}
-            </select>
+          <label className="pp-form-row">
+            <span className="pp-field-label">Kitchen name</span>
+            <span className="pp-field">
+              <input
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                disabled={busy}
+              />
+            </span>
           </label>
-          <label className="pp-field">
-            <span>Dimension</span>
-            <select
-              value={dimension}
-              onChange={(e) => setDimension(e.target.value)}
-              disabled={busy}
-            >
-              {dimensions
-                .filter((d) => d !== "All dimensions")
-                .map((d) => (
-                  <option key={d}>{d}</option>
-                ))}
-            </select>
+
+          <label className="pp-form-row">
+            <span className="pp-field-label">Tagline</span>
+            <span className="pp-field">
+              <input
+                value={tagline}
+                onChange={(e) => setTagline(e.target.value)}
+                disabled={busy}
+              />
+            </span>
           </label>
-        </div>
-        {error && (
-          <p className="pp-edit-error" role="alert">
-            {error}
-          </p>
-        )}
-        <button
-          type="button"
-          className="pp-btn pp-btn-primary pp-btn-sm"
-          onClick={saveStore}
-          disabled={busy || !dirty}
-        >
-          {flash ? (
-            <>
-              <Icon name="check" size={14} />
-              Saved
-            </>
-          ) : (
-            "Save store details"
+
+          <div className="pp-settings__pair">
+            <label className="pp-form-row">
+              <span className="pp-field-label">Cargo class</span>
+              <span className="pp-field">
+                <select
+                  value={category}
+                  onChange={(e) => setCategory(e.target.value)}
+                  disabled={busy}
+                >
+                  {categories
+                    .filter((c) => c !== "All")
+                    .map((c) => (
+                      <option key={c}>{c}</option>
+                    ))}
+                </select>
+                <Icon name="chevron-down" size={14} />
+              </span>
+            </label>
+            <label className="pp-form-row">
+              <span className="pp-field-label">Registered dimension</span>
+              <span className="pp-field">
+                <select
+                  value={dimension}
+                  onChange={(e) => setDimension(e.target.value)}
+                  disabled={busy}
+                >
+                  {dimensions
+                    .filter((d) => d !== "All dimensions")
+                    .map((d) => (
+                      <option key={d}>{d}</option>
+                    ))}
+                </select>
+                <Icon name="chevron-down" size={14} />
+              </span>
+            </label>
+          </div>
+
+          {error && (
+            <p className="pp-alert" role="alert">
+              <Icon name="alert" size={18} />
+              {error}
+            </p>
           )}
-        </button>
-      </div>
 
-      <h3 className="pp-menu-heading">
-        Dishes{" "}
-        <span className="pp-dash-hint">
-          ({store.items.filter((i) => !i.delisted).length} of {store.items.length}{" "}
-          listed · prep times &amp; photos show to customers)
-        </span>
-      </h3>
-      <AddDishForm onAdded={reload} />
-      {store.items.length === 0 && (
-        <p className="pp-dash-empty">No dishes yet — add your first one above.</p>
-      )}
-      <ul className="pp-edit-list">
-        {store.items.map((item) => (
-          <MenuItemEditor key={item.id} item={item} onSaved={reload} />
-        ))}
-      </ul>
+          <div className="pp-settings__actions">
+            <button
+              type="button"
+              className="pp-btn"
+              onClick={saveStore}
+              disabled={busy || !dirty}
+            >
+              {flash ? (
+                <>
+                  <Icon name="check" size={14} />
+                  Saved
+                </>
+              ) : (
+                "Save storefront"
+              )}
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <section className="pp-block">
+        <div className="pp-block__head">
+          <h3>Dishes</h3>
+          <span className="pp-block__hint">
+            {listed} of {store.items.length} on the board
+          </span>
+        </div>
+
+        <AddDish onAdded={reload} />
+
+        {store.items.length === 0 ? (
+          <div className="pp-state">
+            <Portal size={64} state="closed" />
+            <p className="pp-state__title">Nothing declared</p>
+            <p className="pp-state__body">
+              Your licence is current and your board is empty. Declare a dish and
+              it goes live immediately.
+            </p>
+          </div>
+        ) : (
+          <ul className="pp-dishes">
+            {store.items.map((item) => (
+              <DishEditor key={item.id} item={item} onSaved={reload} />
+            ))}
+          </ul>
+        )}
+      </section>
     </div>
   );
 }
 
-function OrderCard({
+function QueueCard({
   order,
   onDelivered,
 }: {
@@ -652,18 +731,22 @@ function OrderCard({
   onDelivered: (id: string) => Promise<void>;
 }) {
   const [busy, setBusy] = useState(false);
+  const status = STATUS[order.status];
+
   return (
-    <li className="pp-oc">
-      <div className="pp-oc-head">
-        <span className="pp-oc-id">{order.id}</span>
-        <span className={`pp-status pp-status-${order.status}`}>
-          {STATUS_LABEL[order.status]}
+    <li className="pp-order">
+      <div className="pp-order__head">
+        <span className="pp-order__ident">
+          <span className="pp-order__id">{order.id}</span>
+          <span className="pp-order__meta">
+            {order.customerName} · {order.dimension} ·{" "}
+            {formatWhen(order.placedAt)}
+          </span>
         </span>
+        <span className={`pp-tag ${status.tone}`}>{status.label}</span>
       </div>
-      <p className="pp-oc-meta">
-        {order.customerName} · {order.dimension} · {formatWhen(order.placedAt)}
-      </p>
-      <ul className="pp-oc-items">
+
+      <ul className="pp-order__items">
         {order.items.map((it, i) => (
           <li key={i}>
             <span>
@@ -673,12 +756,17 @@ function OrderCard({
           </li>
         ))}
       </ul>
-      <div className="pp-oc-foot">
-        <span className="pp-oc-sub">Subtotal {money(order.subtotal)}</span>
-        {order.status === "pending" && (
+
+      <p className="pp-order__total">
+        <span>Your share, before fees</span>
+        <span>{money(order.subtotal)}</span>
+      </p>
+
+      {order.status === "pending" && (
+        <div className="pp-settings__actions">
           <button
             type="button"
-            className="pp-btn pp-btn-primary pp-btn-sm"
+            className="pp-btn pp-btn--go pp-btn--sm"
             disabled={busy}
             onClick={async () => {
               setBusy(true);
@@ -689,15 +777,15 @@ function OrderCard({
               }
             }}
           >
-            {busy ? "…" : "Mark delivered"}
+            {busy ? "Confirming…" : "Confirm delivery"}
           </button>
-        )}
-      </div>
+        </div>
+      )}
     </li>
   );
 }
 
-function OrdersTab({
+function QueueTab({
   orders,
   reload,
 }: {
@@ -713,32 +801,43 @@ function OrdersTab({
   const past = orders.filter((o) => o.status !== "pending");
 
   return (
-    <div className="pp-dash-panel">
-      <section>
-        <h3 className="pp-menu-heading">
-          Pending <span className="pp-dash-hint">({pending.length} in the queue)</span>
-        </h3>
+    <div className="pp-desk__panel">
+      <section className="pp-block">
+        <div className="pp-block__head">
+          <h3>In the queue</h3>
+          <span className="pp-block__hint">
+            {pending.length} awaiting confirmation
+          </span>
+        </div>
         {pending.length === 0 ? (
-          <p className="pp-dash-empty">No orders cooking right now. Quiet kitchen.</p>
+          <div className="pp-state">
+            <Portal size={64} state="closed" />
+            <p className="pp-state__title">Queue clear</p>
+            <p className="pp-state__body">
+              Nothing is cooking. Every order on file has been confirmed or
+              written off.
+            </p>
+          </div>
         ) : (
-          <ul className="pp-oc-list">
+          <ul className="pp-record__list">
             {pending.map((o) => (
-              <OrderCard key={o.id} order={o} onDelivered={markDelivered} />
+              <QueueCard key={o.id} order={o} onDelivered={markDelivered} />
             ))}
           </ul>
         )}
       </section>
 
-      <section>
-        <h3 className="pp-menu-heading">
-          Past orders <span className="pp-dash-hint">({past.length})</span>
-        </h3>
+      <section className="pp-block">
+        <div className="pp-block__head">
+          <h3>Closed</h3>
+          <span className="pp-block__hint">{past.length} on file</span>
+        </div>
         {past.length === 0 ? (
-          <p className="pp-dash-empty">No history yet.</p>
+          <p className="pp-fine">Nothing closed yet.</p>
         ) : (
-          <ul className="pp-oc-list">
+          <ul className="pp-record__list">
             {past.map((o) => (
-              <OrderCard key={o.id} order={o} onDelivered={markDelivered} />
+              <QueueCard key={o.id} order={o} onDelivered={markDelivered} />
             ))}
           </ul>
         )}
@@ -747,60 +846,84 @@ function OrdersTab({
   );
 }
 
-function MoneyTab({ finance }: { finance: Finance }) {
+function PayoutTab({ finance }: { finance: Finance }) {
   return (
-    <div className="pp-dash-panel">
-      <div className="pp-money-grid">
-        <div className="pp-money-card pp-money-hero">
-          <span className="pp-money-label">Net profit</span>
-          <span className="pp-money-value">{money(finance.net)}</span>
-          <span className="pp-money-note">after platform fee &amp; reality tax</span>
+    <div className="pp-desk__panel">
+      <section className="pp-block">
+        <div className="pp-block__head">
+          <h3>Payout</h3>
+          <span className="pp-block__hint">
+            Updates as deliveries are confirmed
+          </span>
         </div>
-        <div className="pp-money-card">
-          <span className="pp-money-label">Gross sales</span>
-          <span className="pp-money-value">{money(finance.gross)}</span>
-          <span className="pp-money-note">{finance.deliveredOrders} delivered</span>
-        </div>
-        <div className="pp-money-card">
-          <span className="pp-money-label">Pending</span>
-          <span className="pp-money-value">{money(finance.pending)}</span>
-          <span className="pp-money-note">{finance.pendingOrders} in the queue</span>
-        </div>
-        <div className="pp-money-card">
-          <span className="pp-money-label">Refunded</span>
-          <span className="pp-money-value">{money(finance.refunded)}</span>
-          <span className="pp-money-note">lost / wrong dimension</span>
-        </div>
-      </div>
 
-      <div className="pp-ledger">
-        <h3 className="pp-menu-heading">Payout breakdown</h3>
-        <p className="pp-ledger-row">
-          <span>Gross sales (delivered)</span>
-          <span>{money(finance.gross)}</span>
-        </p>
-        <p className="pp-ledger-row pp-ledger-neg">
-          <span>Portal Pantry fee ({Math.round(finance.platformFeeRate * 100)}%)</span>
-          <span>−{money(finance.platformFee)}</span>
-        </p>
-        <p className="pp-ledger-row pp-ledger-neg">
-          <span>Reality tax ({Math.round(finance.taxRate * 100)}%)</span>
-          <span>−{money(finance.tax)}</span>
-        </p>
-        <p className="pp-ledger-row pp-ledger-total">
-          <span>Net payout</span>
-          <span>{money(finance.net)}</span>
-        </p>
-      </div>
-      <p className="pp-dash-note">
-        Figures update as orders are delivered. Reality tax is remitted to the
-        Galactic Federation automatically.
-      </p>
+        <div className="pp-stats">
+          <div className="pp-panel pp-stat pp-stat--net">
+            <span className="pp-stat__label">Net payout</span>
+            <span className="pp-stat__value">{money(finance.net)}</span>
+            <span className="pp-stat__note">
+              After the platform fee and reality tax. This is what lands.
+            </span>
+          </div>
+          <div className="pp-panel pp-stat">
+            <span className="pp-stat__label">Gross</span>
+            <span className="pp-stat__value">{money(finance.gross)}</span>
+            <span className="pp-stat__note">
+              {finance.deliveredOrders} delivered
+            </span>
+          </div>
+          <div className="pp-panel pp-stat">
+            <span className="pp-stat__label">Held</span>
+            <span className="pp-stat__value">{money(finance.pending)}</span>
+            <span className="pp-stat__note">
+              {finance.pendingOrders} still in transit
+            </span>
+          </div>
+          <div className="pp-panel pp-stat">
+            <span className="pp-stat__label">Written off</span>
+            <span className="pp-stat__value">{money(finance.refunded)}</span>
+            <span className="pp-stat__note">Lost or misrouted</span>
+          </div>
+        </div>
+      </section>
+
+      <section className="pp-block">
+        <div className="pp-block__head">
+          <h3>Breakdown</h3>
+        </div>
+        <div className="pp-panel pp-settings">
+          <div className="pp-ledger">
+            <p className="pp-ledger__row">
+              <span>Gross sales, delivered only</span>
+              <span>{money(finance.gross)}</span>
+            </p>
+            <p className="pp-ledger__row pp-ledger__row--neg">
+              <span>
+                Carrier fee ({Math.round(finance.platformFeeRate * 100)}%)
+              </span>
+              <span>−{money(finance.platformFee)}</span>
+            </p>
+            <p className="pp-ledger__row pp-ledger__row--neg">
+              <span>Reality tax ({Math.round(finance.taxRate * 100)}%)</span>
+              <span>−{money(finance.tax)}</span>
+            </p>
+            <p className="pp-ledger__row pp-ledger__row--total">
+              <span>Net payout</span>
+              <span>{money(finance.net)}</span>
+            </p>
+          </div>
+          <p className="pp-fine">
+            § 9.2 — Reality tax is withheld at source and remitted on your
+            behalf. Customers are not charged it; it comes out of your side.
+            Disputes are heard in the dimension of origin.
+          </p>
+        </div>
+      </section>
     </div>
   );
 }
 
-function ReviewCard({
+function ReportCard({
   review,
   onReplied,
 }: {
@@ -821,7 +944,11 @@ function ReviewCard({
       await onReplied();
       setEditing(false);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Reply failed — try again.");
+      setError(
+        err instanceof ApiError
+          ? err.message
+          : "The response was not filed. Try again.",
+      );
     } finally {
       setBusy(false);
     }
@@ -829,23 +956,21 @@ function ReviewCard({
 
   return (
     <li className="pp-review">
-      <div className="pp-review-head">
-        <span className="pp-review-author">
-          <span className="pp-review-avatar" aria-hidden="true">
+      <div className="pp-review__head">
+        <span className="pp-review__author">
+          <span className="pp-review__avatar" aria-hidden="true">
             <Icon name="user" size={15} />
           </span>
           {review.author}
+          <span className="pp-order__meta">{formatWhen(review.createdAt)}</span>
         </span>
         <Stars rating={review.rating} />
       </div>
-      <p className="pp-review-body">{review.body}</p>
-      <p className="pp-review-when">{formatWhen(review.createdAt)}</p>
+      <p className="pp-review__body">{review.body}</p>
 
       {review.reply && !editing && (
-        <div className="pp-review-reply">
-          <span className="pp-review-reply-label">
-            <PortalMark size={16} /> Your reply
-          </span>
+        <div className="pp-review__reply">
+          <span className="pp-review__reply-label">Your response, on file</span>
           <p>{review.reply}</p>
           <button
             type="button"
@@ -855,27 +980,38 @@ function ReviewCard({
               setEditing(true);
             }}
           >
-            Edit reply
+            Amend it
           </button>
         </div>
       )}
 
       {(!review.reply || editing) && (
-        <div className="pp-reply-box">
-          <textarea
-            value={draft}
-            onChange={(e) => setDraft(e.target.value)}
-            placeholder="Reply as the owner…"
-            rows={2}
-            disabled={busy}
-            aria-label={`Reply to ${review.author}`}
-          />
+        <div className="pp-block pp-section__note">
+          <label className="pp-form-row">
+            <span className="pp-field-label">Response</span>
+            <textarea
+              className="pp-textarea"
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              placeholder="Filed publicly under your kitchen's name."
+              disabled={busy}
+            />
+          </label>
           {error && (
-            <p className="pp-edit-error" role="alert">
+            <p className="pp-alert" role="alert">
+              <Icon name="alert" size={18} />
               {error}
             </p>
           )}
-          <div className="pp-reply-actions">
+          <div className="pp-settings__actions">
+            <button
+              type="button"
+              className="pp-btn pp-btn--sm"
+              onClick={send}
+              disabled={busy || draft.trim().length === 0}
+            >
+              {busy ? "Filing…" : review.reply ? "Update response" : "Respond"}
+            </button>
             {editing && (
               <button
                 type="button"
@@ -886,14 +1022,6 @@ function ReviewCard({
                 Cancel
               </button>
             )}
-            <button
-              type="button"
-              className="pp-btn pp-btn-primary pp-btn-sm"
-              onClick={send}
-              disabled={busy || draft.trim().length === 0}
-            >
-              {busy ? "Sending…" : review.reply ? "Update reply" : "Reply"}
-            </button>
           </div>
         </div>
       )}
@@ -901,7 +1029,7 @@ function ReviewCard({
   );
 }
 
-function ReviewsTab({
+function ReportsTab({
   reviews,
   reload,
 }: {
@@ -912,19 +1040,39 @@ function ReviewsTab({
     reviews.length > 0
       ? reviews.reduce((n, r) => n + r.rating, 0) / reviews.length
       : 0;
+  const unanswered = reviews.filter((r) => !r.reply).length;
+
+  if (reviews.length === 0) {
+    return (
+      <div className="pp-desk__panel">
+        <div className="pp-state">
+          <Portal size={64} state="closed" />
+          <p className="pp-state__title">Nothing filed</p>
+          <p className="pp-state__body">
+            No customer has filed a report against this kitchen. Take that
+            however you like.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="pp-dash-panel">
-      <div className="pp-review-summary">
-        <span className="pp-review-avg">{avg.toFixed(1)}</span>
-        <span>
+    <div className="pp-desk__panel">
+      <div className="pp-panel pp-avg">
+        <span className="pp-avg__score">{avg.toFixed(1)}</span>
+        <span className="pp-avg__of">
           <Stars rating={Math.round(avg)} />
-          <span className="pp-dash-hint"> · {reviews.length} reviews</span>
+          <span className="pp-block__hint">
+            {reviews.length} on record
+            {unanswered > 0 ? ` · ${unanswered} without a response` : ""}
+          </span>
         </span>
       </div>
-      <ul className="pp-review-list">
+
+      <ul className="pp-reviews">
         {reviews.map((r) => (
-          <ReviewCard key={r.id} review={r} onReplied={reload} />
+          <ReportCard key={r.id} review={r} onReplied={reload} />
         ))}
       </ul>
     </div>
@@ -944,12 +1092,13 @@ export default function OwnerDashboard({
   onViewStorefront,
   onCatalogChanged,
 }: OwnerDashboardProps) {
-  const [tab, setTab] = useState<Tab>("orders");
+  const [tab, setTab] = useState<Tab>("queue");
   const [store, setStore] = useState<Restaurant | null>(null);
   const [orders, setOrders] = useState<OwnerOrder[] | null>(null);
   const [finance, setFinance] = useState<Finance | null>(null);
   const [reviews, setReviews] = useState<Review[] | null>(null);
   const [error, setError] = useState("");
+  const tabRefs = useRef<Record<string, HTMLButtonElement | null>>({});
 
   const loadStore = useCallback(async () => {
     setStore(await getOwnerRestaurant());
@@ -970,7 +1119,7 @@ export default function OwnerDashboard({
         setError(
           err instanceof ApiError
             ? err.message
-            : "Couldn't reach your kitchen's records.",
+            : "Your kitchen's records are unreachable. Nothing has been lost.",
         ),
     );
   }, [loadStore, loadOrders, loadFinance, loadReviews]);
@@ -984,32 +1133,45 @@ export default function OwnerDashboard({
     await Promise.all([loadOrders(), loadFinance()]);
   }, [loadOrders, loadFinance]);
 
+  /* Real tablist keyboard behaviour: arrows move and activate, Home/End jump.
+     Only the selected tab is in the tab order, so Tab moves past the whole
+     group into the panel — which is the point of a tablist. */
+  const onTabKey = (e: React.KeyboardEvent) => {
+    const i = TABS.findIndex((t) => t.id === tab);
+    let next = -1;
+    if (e.key === "ArrowRight") next = (i + 1) % TABS.length;
+    else if (e.key === "ArrowLeft") next = (i - 1 + TABS.length) % TABS.length;
+    else if (e.key === "Home") next = 0;
+    else if (e.key === "End") next = TABS.length - 1;
+    if (next < 0) return;
+    e.preventDefault();
+    const id = TABS[next].id;
+    setTab(id);
+    tabRefs.current[id]?.focus();
+  };
+
+  const pendingCount = orders?.filter((o) => o.status === "pending").length ?? 0;
+
   return (
-    <div className="pp-page pp-dash">
-      <header className="pp-header">
-        <div className="pp-shell pp-header-inner">
-          <div className="pp-dash-brand">
-            <PortalMark size={34} />
-            <div>
-              <span className="pp-dash-title">
+    <div className="pp-page">
+      <header className="pp-desk__bar">
+        <div className="pp-shell pp-desk__bar-inner">
+          <div className="pp-desk__brand">
+            <PortalMark size={32} />
+            <span>
+              <span className="pp-desk__name">
                 {store?.name ?? user.restaurantName ?? "Your kitchen"}
               </span>
-              <span className="pp-dash-tag">Kitchen dashboard</span>
-            </div>
+              <span className="pp-desk__role">Kitchen desk</span>
+            </span>
           </div>
-          <div className="pp-header-actions">
-            <button
-              type="button"
-              className="pp-btn pp-btn-ghost pp-btn-sm"
-              onClick={onViewStorefront}
-            >
-              View storefront
+          <div className="pp-desk__actions">
+            <button type="button" className="pp-btn" onClick={onViewStorefront}>
+              View the board
             </button>
-            <span className="pp-user-chip pp-user-chip-static">
-              <span className="pp-user-avatar" aria-hidden="true">
-                <Icon name="user" size={16} />
-              </span>
-              <span className="pp-user-name">{user.name.split(" ")[0]}</span>
+            <span className="pp-whoami">
+              <Icon name="user" size={16} aria-hidden="true" />
+              {user.name.split(" ")[0]}
             </span>
             <button
               type="button"
@@ -1024,68 +1186,81 @@ export default function OwnerDashboard({
         </div>
       </header>
 
-      <div className="pp-dash-tabs-wrap">
+      <div className="pp-tabs">
         <div className="pp-shell">
-          <nav className="pp-dash-tabs" aria-label="Dashboard sections">
+          <div
+            className="pp-tabs__list"
+            role="tablist"
+            aria-label="Kitchen desk sections"
+            onKeyDown={onTabKey}
+          >
             {TABS.map((t) => (
               <button
                 key={t.id}
+                ref={(el) => {
+                  tabRefs.current[t.id] = el;
+                }}
                 type="button"
-                className={`pp-dash-tab${tab === t.id ? " active" : ""}`}
-                aria-pressed={tab === t.id}
+                className="pp-tab"
+                role="tab"
+                id={`pp-tab-${t.id}`}
+                aria-selected={tab === t.id}
+                aria-controls={`pp-panel-${t.id}`}
+                tabIndex={tab === t.id ? 0 : -1}
                 onClick={() => setTab(t.id)}
               >
                 {t.label}
+                {t.id === "queue" && pendingCount > 0 && (
+                  <span className="pp-tab__count">{pendingCount}</span>
+                )}
               </button>
             ))}
-          </nav>
+          </div>
         </div>
       </div>
 
-      <main className="pp-shell pp-dash-main">
+      <main
+        className="pp-shell pp-desk__main"
+        role="tabpanel"
+        id={`pp-panel-${tab}`}
+        aria-labelledby={`pp-tab-${tab}`}
+        tabIndex={0}
+      >
         {error && (
-          <p className="pp-login-error" role="alert">
+          <p className="pp-alert" role="alert">
+            <Icon name="alert" size={18} />
             {error}
           </p>
         )}
 
-        {tab === "menu" &&
-          (store ? (
-            <MenuTab store={store} reload={afterMenuChange} />
-          ) : (
-            <DashLoading label="Loading your menu…" />
-          ))}
-
-        {tab === "orders" &&
+        {tab === "queue" &&
           (orders ? (
-            <OrdersTab orders={orders} reload={afterOrderChange} />
+            <QueueTab orders={orders} reload={afterOrderChange} />
           ) : (
-            <DashLoading label="Loading the order book…" />
+            <DeskLoading label="Reading the order book" />
           ))}
 
-        {tab === "money" &&
+        {tab === "dishes" &&
+          (store ? (
+            <DishesTab store={store} reload={afterMenuChange} />
+          ) : (
+            <DeskLoading label="Reading your board" />
+          ))}
+
+        {tab === "payout" &&
           (finance ? (
-            <MoneyTab finance={finance} />
+            <PayoutTab finance={finance} />
           ) : (
-            <DashLoading label="Counting zeeps…" />
+            <DeskLoading label="Counting" />
           ))}
 
-        {tab === "reviews" &&
+        {tab === "reports" &&
           (reviews ? (
-            <ReviewsTab reviews={reviews} reload={loadReviews} />
+            <ReportsTab reviews={reviews} reload={loadReviews} />
           ) : (
-            <DashLoading label="Loading reviews…" />
+            <DeskLoading label="Pulling the file" />
           ))}
       </main>
     </div>
-  );
-}
-
-function DashLoading({ label }: { label: string }) {
-  return (
-    <p className="pp-orders-loading">
-      <span className="pp-spin pp-spin-green" aria-hidden="true" />
-      {label}
-    </p>
   );
 }

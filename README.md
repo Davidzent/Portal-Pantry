@@ -7,7 +7,7 @@
 [![React](https://img.shields.io/badge/React-19-149ECA?logo=react&logoColor=white)](https://react.dev)
 [![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org)
 [![Vite](https://img.shields.io/badge/Vite-dev%20%26%20build-646CFF?logo=vite&logoColor=white)](https://vite.dev)
-![Backend](https://img.shields.io/badge/backend-in--browser%20mock%20or%20Node%20%2B%20SQLite-7be04b)
+![Backend](https://img.shields.io/badge/backend-in--browser%20mock%20or%20Node%20%2B%20SQLite-9be05a)
 ![Tests](https://img.shields.io/badge/tests-Vitest-6E9F18?logo=vitest&logoColor=white)
 [![Live demo](https://img.shields.io/badge/live-Firebase%20Hosting-FFCA28?logo=firebase&logoColor=white)](https://www.zntsns.com/portal-pantry/)
 
@@ -16,7 +16,7 @@
 
 </div>
 
-![Portal Pantry storefront](./docs/storefront.jpg)
+![Portal Pantry storefront](./docs/storefront.png)
 
 Portal Pantry is a full food-delivery app with a **production-shaped
 architecture** — two account roles (customer & store owner), session auth, an
@@ -34,33 +34,47 @@ backend** — identical API contract, switched with a single environment variabl
 
 ### For customers
 - **Browse & filter** kitchens by *dimension* and food category, with search.
-- **Restaurant menus** with dish photos, descriptions, per-item **prep times**,
-  and a photo **lightbox** ("open it bigger").
-- **Cart & checkout** with a wormhole toll, "reality tax", and an animated
-  portal sequence — your order lands in the kitchen's live queue as *pending*.
-- **Order history** scoped to your account, with live statuses.
-- **Write reviews** (star rating + text) that update the kitchen's rating.
-- **Register** a new account or sign in.
+- **Kitchen menus** with dish photos, descriptions, per-item **prep times**, and
+  a photo lightbox — opened *through a portal* rather than in a modal.
+- **A shipping manifest** instead of a cart: line items, wormhole toll, and a
+  total that matches what the server actually charges, to the last unit.
+- **Checkout** as a timestamped transit log, ending in a docket number — your
+  order lands in the kitchen's live queue as *in transit*.
+- **Shipment record** scoped to your account, with live statuses.
+- **File reports** (star rating + text) that update the kitchen's rating.
+- **Open an account** or sign in.
 
 ### For store owners
-- A dedicated **dashboard** (its own hash route, `#/manage`) with four tabs:
-  - **Menu** — rename/reprice dishes, edit descriptions & prep times, add new
-    dishes, upload/replace photos, delist/relist, edit the storefront.
-  - **Orders** — the live pending queue + past orders; mark orders delivered.
-  - **Money** — gross sales, pending, refunds, platform fee (15%), reality tax
-    (8%), and **net payout** — all computed server-side.
-  - **Reviews** — read every review and reply to them.
-- **Create your own restaurant** at registration.
+- A dedicated **kitchen desk** (its own hash route, `#/manage`) with four tabs:
+  - **Queue** — orders awaiting confirmation plus everything closed; confirm
+    deliveries. Carries a live count badge.
+  - **Dishes** — rename/reprice dishes, edit descriptions & prep times, add new
+    ones, upload/replace photos, take them off the board, edit the storefront.
+  - **Payout** — gross, held, written off, carrier fee (15%), reality tax (8%)
+    and **net payout** — all computed server-side.
+  - **Reports** — read every report and respond to it.
+- **Create your own kitchen** at registration.
 - Owners can't order (enforced by the server, not just the UI).
 
 <table>
   <tr>
-    <td width="50%"><img src="./docs/restaurant.jpg" alt="Restaurant menu"><p align="center"><em>Restaurant menu — photos, prep times & reviews</em></p></td>
-    <td width="50%"><img src="./docs/checkout.jpg" alt="Checkout"><p align="center"><em>Checkout — order placed through the portal</em></p></td>
+    <td width="50%"><img src="./docs/menu.png" alt="Kitchen menu"><p align="center"><em>Kitchen menu — arrives through the portal</em></p></td>
+    <td width="50%"><img src="./docs/checkout.png" alt="Order confirmed"><p align="center"><em>Checkout — the payoff screen</em></p></td>
   </tr>
   <tr>
-    <td width="50%"><img src="./docs/owner-orders.jpg" alt="Owner orders"><p align="center"><em>Owner dashboard — live order queue</em></p></td>
-    <td width="50%"><img src="./docs/owner-money.jpg" alt="Owner finances"><p align="center"><em>Owner dashboard — payout breakdown</em></p></td>
+    <td width="50%"><img src="./docs/desk-queue.png" alt="Kitchen desk queue"><p align="center"><em>Kitchen desk — the order queue</em></p></td>
+    <td width="50%"><img src="./docs/desk-payout.png" alt="Kitchen desk payout"><p align="center"><em>Kitchen desk — payout, computed server-side</em></p></td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="./docs/record.png" alt="Shipment record"><p align="center"><em>Shipment record</em></p></td>
+    <td width="50%"><img src="./docs/desk-dishes.png" alt="Kitchen desk dishes"><p align="center"><em>Kitchen desk — menu editing</em></p></td>
+  </tr>
+</table>
+
+<table>
+  <tr>
+    <td width="60%"><img src="./docs/signin.png" alt="Account dialog"><p align="center"><em>Account dialog</em></p></td>
+    <td width="40%"><img src="./docs/mobile.png" alt="The board at 390px"><p align="center"><em>The board at 390px</em></p></td>
   </tr>
 </table>
 
@@ -110,13 +124,64 @@ Owner-uploaded images are resized & re-encoded to WebP **in the browser**
 
 ---
 
+## Design system
+
+**Concept: municipal paperwork for an impossible service.** A licensed
+interdimensional freight operator that has the forms to prove it. The cart is a
+shipping manifest, the receipt is a docket, reviews are filed reports, and every
+disclaimer is a § clause nobody reads.
+
+**Tokens.** Every colour, size, radius and duration in the app resolves to
+`styles/tokens.css`. Enforced, not aspirational: there is no raw hex and no
+hardcoded duration anywhere else in the stylesheets.
+
+**Rationed colour.** Portal green appears only on things that *transport,
+transact or confirm* — the checkout button, the manifest total, the confirmation,
+a delivered shipment. The `Portal` component's three states (`closed` /
+`charging` / `open`) make that rule structural rather than a convention someone
+has to remember. Teal carries everything interactive; a deliberately unlovely
+salmon carries everything that went wrong.
+
+**Type.** Three self-hosted variable faces, **93 kB total** — Bricolage
+Grotesque (display), Public Sans (body), Spline Sans Mono (codes, dockets,
+prices, fine print). Subset from the full upstream files with `fontTools`, with
+Bricolage's optical-size axis pinned. Each has a metric-matched fallback
+`@font-face`, so a font swap moves nothing: **zero CLS**, and no third-party
+font request.
+
+**The signature.** Opening a kitchen is not a modal. A `clip-path: circle()`
+expands from the centre of the card you clicked, with a green ring flare from
+the same point — the menu arrives *through* an aperture cut in the board. The
+same reveal carries checkout, because an order genuinely is going through a
+portal.
+
+**Accessibility is a floor, not a pass.** Every interactive control is ≥44px;
+every text pair meets WCAG AA measured on rendered pixels with alpha
+compositing; one focus treatment everywhere; a real ARIA tablist with arrow-key
+navigation on the kitchen desk; open dialogs mark the page behind them `inert`
+so Tab cannot escape. All motion is either inside a
+`prefers-reduced-motion: no-preference` guard or explicitly cancelled.
+
 ## Tech
 
 - **Frontend** — React 19 + TypeScript (strict), no state library (plain hooks),
-  hand-written CSS (cosmic dark theme, `Titan One` + `Baloo 2`), built with Vite.
-  Zero third-party runtime dependencies.
+  hand-written CSS built from tokens, self-hosted subset webfonts, built with
+  Vite. **Zero third-party runtime dependencies** — the portal transition, the
+  charging indicator and the transit log are all CSS and SVG.
 - **Backend (optional)** — Node 22+ · Express 5 · `node:sqlite` · Zod validation
   · pino logging · Vitest. Typed end-to-end; seeds its database on first boot.
+
+### Build-time tooling
+
+Small dependency-free scripts under `portal-pantry/scripts/`, all committed
+output so a normal build needs none of them:
+
+| Script | What it does |
+|---|---|
+| `build-fonts.sh` | Downloads the upstream variable fonts, subsets them, pins Bricolage's `opsz`, and prints the metric overrides for the fallback faces. |
+| `build-ink.mjs` | Bakes the hand-drawn manifest tear line to a static SVG data URI — the jitter is computed once at authoring time so no SVG filter runs at paint time. |
+| `check-classes.mjs` | Fails the build if markup uses a `pp-*` class no stylesheet defines, and reports CSS rules nothing uses. Currently clean in both directions. |
+| `screenshots.mjs` | Regenerates every image in `docs/` by driving headless Chrome over the DevTools Protocol — no Playwright install, just Node's built-in `fetch` and `WebSocket`. |
 
 ## Run it
 
@@ -154,8 +219,12 @@ config — port, DB path, CORS origins, session TTL — is documented in
 The backend ships a **Vitest** suite (auth, catalog, orders, and the owner API);
 run it with `npm test` from `portal-pantry-back`.
 
-**Try the owner side:** sign in as `owner@neutrino.pp` (any 4+ char password),
-or register a new owner account to create your own kitchen from scratch.
+**Regenerate the screenshots** in `docs/` after a design change — with the dev
+server running, `node scripts/screenshots.mjs` from `portal-pantry`.
+
+**Try the owner side:** sign in as `owner@neutrino.pp` with any password of
+four characters or more, or open a new kitchen account to build one from
+scratch.
 
 **Reset the demo:** on the mock, clear the site's `localStorage` (DevTools →
 Application → Local storage) and reload; on the real backend, delete its SQLite

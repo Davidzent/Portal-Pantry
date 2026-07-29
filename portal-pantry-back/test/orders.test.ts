@@ -31,7 +31,7 @@ describe("customer orders", () => {
       .set(bearer(token))
       .send({
         items: [{ restaurantId: "neutrino", itemId: "nn1", qty: 2 }],
-        dimension: "Ω-77",
+        dimension: "OMEGA-77",
       })
       .expect(201);
 
@@ -100,7 +100,7 @@ describe("server-side pricing", () => {
           { restaurantId: "neutrino", itemId: "nn2", qty: 1, price: 0.01 },
         ],
         total: 1,
-        dimension: "Ω-77",
+        dimension: "OMEGA-77",
       })
       .expect(201);
 
@@ -119,7 +119,7 @@ describe("server-side pricing", () => {
     const token = await customerToken(ctx.app);
     const carts: { items: { restaurantId: string; itemId: string; qty: number }[]; dimension: string; expected: number }[] = [
       { items: [{ restaurantId: "gargantua", itemId: "gg1", qty: 1 }], dimension: "C-131", expected: 45 + 12 },
-      { items: [{ restaurantId: "quantum-q", itemId: "qq1", qty: 2 }], dimension: "Ω-77", expected: 64 + 12 },
+      { items: [{ restaurantId: "quantum-q", itemId: "qq1", qty: 2 }], dimension: "OMEGA-77", expected: 64 + 12 },
       { items: [{ restaurantId: "zorp", itemId: "gz2", qty: 1 }], dimension: "B-612", expected: 33 + 12 },
       { items: [{ restaurantId: "brined-one", itemId: "bo1", qty: 3 }], dimension: "Pickle-9", expected: 72 + 12 },
     ];

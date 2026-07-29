@@ -24,6 +24,7 @@ const REDESIGNED = new Set([
   "LoginModal.tsx",
   "CheckoutModal.tsx",
   "OrderHistoryModal.tsx",
+  "OwnerDashboard.tsx",
   "CartDrawer.tsx",
   "Portal.tsx",
   "Stars.tsx",
@@ -44,7 +45,18 @@ const defined = new Set(
   [...css.matchAll(/\.(pp-[a-zA-Z0-9_-]+)/g)].map((m) => m[1]),
 );
 
+/* Two passes, because the two questions want opposite error biases.
+
+   `used` is strict — only what appears in a `className` attribute — so the
+   "this class has no CSS" report does not fill up with element ids and other
+   pp-prefixed strings.
+
+   `mentioned` is loose: every pp-* token anywhere in the source. The dead-CSS
+   report needs to be generous about what counts as a use, or class names built
+   in template literals, ternaries and array joins get reported as unused. */
 const used = new Map();
+const mentioned = new Set();
+
 function walk(dir) {
   for (const entry of readdirSync(dir, { withFileTypes: true })) {
     const p = join(dir, entry.name);
@@ -57,6 +69,7 @@ function walk(dir) {
           if (c.startsWith("pp-") && !used.has(c)) used.set(c, basename(p));
         }
       }
+      for (const m of src.matchAll(/\bpp-[a-zA-Z0-9_-]+/g)) mentioned.add(m[0]);
     }
   }
 }
@@ -80,5 +93,12 @@ const pendingFiles = [...new Set(inPending.map(([, f]) => f))];
 console.log(
   `\nPending screens (provisional styling, expected): ${inPending.length} classes across ${pendingFiles.join(", ") || "none"}`,
 );
+
+/* The reverse direction: rules no stylesheet consumer references any more.
+   Every screen is redesigned now, so leftovers from earlier passes are simply
+   dead weight in the bundle. */
+const unused = [...defined].filter((cls) => !mentioned.has(cls)).sort();
+console.log(`\nDefined but never used in markup: ${unused.length}`);
+for (const cls of unused) console.log(`  .${cls}`);
 
 process.exit(inRedesigned.length ? 1 : 0);
