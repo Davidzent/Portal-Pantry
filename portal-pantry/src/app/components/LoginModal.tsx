@@ -22,10 +22,15 @@ export default function LoginModal({ onSuccess, onClose }: LoginModalProps) {
   const [error, setError] = useState("");
   const firstFieldRef = useRef<HTMLInputElement>(null);
 
+  const onCloseRef = useRef(onClose);
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  });
+
   useEffect(() => {
     firstFieldRef.current?.focus();
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape") onCloseRef.current();
     };
     document.addEventListener("keydown", onKey);
     document.body.style.overflow = "hidden";
@@ -33,7 +38,7 @@ export default function LoginModal({ onSuccess, onClose }: LoginModalProps) {
       document.removeEventListener("keydown", onKey);
       document.body.style.overflow = "";
     };
-  }, [onClose]);
+  }, []);
 
   const isRegister = mode === "register";
   const isOwner = role === "owner";
@@ -53,182 +58,198 @@ export default function LoginModal({ onSuccess, onClose }: LoginModalProps) {
         : await login(email, password);
       onSuccess(user);
     } catch (err) {
+      // States what happened and what to do about it. Never apologises.
       setError(
         err instanceof ApiError
           ? err.message
-          : "The auth server fell into a wormhole. Try again.",
+          : "The register is unreachable. Nothing was changed on your account. Try again.",
       );
       setBusy(false);
     }
   };
 
   return (
-    <div className="pp-backdrop" onClick={onClose}>
+    <div className="pp-backdrop pp-backdrop--center" onClick={onClose}>
       <div
-        className="pp-modal pp-login"
+        className="pp-modal pp-auth"
         role="dialog"
         aria-modal="true"
-        aria-label={isRegister ? "Create account" : "Sign in"}
+        aria-labelledby="pp-auth-title"
         onClick={(e) => e.stopPropagation()}
       >
         <button
           type="button"
           className="pp-iconbtn pp-close"
           onClick={onClose}
-          aria-label="Close"
+          aria-label="Close without signing in"
         >
           <Icon name="close" size={18} />
         </button>
 
-        <div className="pp-login-body">
-          <span className="pp-login-emoji" aria-hidden="true">
-            <PortalMark size={40} />
+        <div className="pp-auth__head">
+          <span className="pp-auth__kicker">
+            <PortalMark size={24} />
+            <span className="pp-code">Carrier account</span>
           </span>
-          <h2 className="pp-checkout-title">
-            {isRegister ? "Join the multiverse" : "Beam in"}
+          <h2 className="pp-auth__title" id="pp-auth-title">
+            {isRegister ? "Open an account" : "Sign in"}
           </h2>
+          <p className="pp-auth__sub">
+            {isRegister
+              ? "One account per version of you. We do not check, but the couriers do."
+              : "Accounts are valid in the dimension they were opened in. Yours is probably this one."}
+          </p>
+        </div>
 
-          <div className="pp-role-toggle" role="group" aria-label="Auth mode">
-            <button
-              type="button"
-              className={mode === "signin" ? "active" : undefined}
-              aria-pressed={mode === "signin"}
-              onClick={() => {
-                setMode("signin");
-                setError("");
-              }}
-              disabled={busy}
-            >
-              Sign in
-            </button>
-            <button
-              type="button"
-              className={mode === "register" ? "active" : undefined}
-              aria-pressed={mode === "register"}
-              onClick={() => {
-                setMode("register");
-                setError("");
-              }}
-              disabled={busy}
-            >
-              Create account
-            </button>
-          </div>
+        <div className="pp-segment" role="group" aria-label="Account action">
+          <button
+            type="button"
+            aria-pressed={mode === "signin"}
+            onClick={() => {
+              setMode("signin");
+              setError("");
+            }}
+            disabled={busy}
+          >
+            Sign in
+          </button>
+          <button
+            type="button"
+            aria-pressed={mode === "register"}
+            onClick={() => {
+              setMode("register");
+              setError("");
+            }}
+            disabled={busy}
+          >
+            New account
+          </button>
+        </div>
 
-          <form className="pp-login-form" onSubmit={submit}>
-            {isRegister && (
-              <div className="pp-role-toggle" role="group" aria-label="Account type">
-                <button
-                  type="button"
-                  className={role === "customer" ? "active" : undefined}
-                  aria-pressed={role === "customer"}
-                  onClick={() => setRole("customer")}
-                  disabled={busy}
-                >
-                  Customer
-                </button>
-                <button
-                  type="button"
-                  className={role === "owner" ? "active" : undefined}
-                  aria-pressed={role === "owner"}
-                  onClick={() => setRole("owner")}
-                  disabled={busy}
-                >
-                  Store owner
-                </button>
-              </div>
-            )}
+        <form className="pp-auth__form" onSubmit={submit}>
+          {isRegister && (
+            <div className="pp-segment" role="group" aria-label="Account type">
+              <button
+                type="button"
+                aria-pressed={role === "customer"}
+                onClick={() => setRole("customer")}
+                disabled={busy}
+              >
+                Ordering
+              </button>
+              <button
+                type="button"
+                aria-pressed={role === "owner"}
+                onClick={() => setRole("owner")}
+                disabled={busy}
+              >
+                Kitchen
+              </button>
+            </div>
+          )}
 
-            {isRegister && (
-              <label className="pp-field">
-                <span>Your name</span>
+          {isRegister && (
+            <label className="pp-form-row">
+              <span className="pp-field-label">Name on the account</span>
+              <span className="pp-field">
                 <input
                   ref={firstFieldRef}
                   type="text"
                   required
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="Rick Sanchez"
+                  placeholder="A. Trembley"
                   autoComplete="name"
                   disabled={busy}
                 />
-              </label>
-            )}
+              </span>
+            </label>
+          )}
 
-            <label className="pp-field">
-              <span>Email</span>
+          <label className="pp-form-row">
+            <span className="pp-field-label">Email</span>
+            <span className="pp-field">
               <input
                 ref={isRegister ? undefined : firstFieldRef}
                 type="email"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@dimension-c131.com"
+                placeholder="you@meridian-9.pp"
                 autoComplete="email"
                 disabled={busy}
               />
-            </label>
+            </span>
+          </label>
 
-            <label className="pp-field">
-              <span>Password</span>
+          <label className="pp-form-row">
+            <span className="pp-field-label">Password</span>
+            <span className="pp-field">
               <input
                 type="password"
                 required
+                minLength={4}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
+                placeholder="At least four characters"
                 autoComplete={isRegister ? "new-password" : "current-password"}
                 disabled={busy}
               />
-            </label>
+            </span>
+          </label>
 
-            {isRegister && isOwner && (
-              <label className="pp-field">
-                <span>Restaurant name</span>
+          {isRegister && isOwner && (
+            <label className="pp-form-row">
+              <span className="pp-field-label">Kitchen name</span>
+              <span className="pp-field">
                 <input
                   type="text"
                   required
                   value={restaurantName}
                   onChange={(e) => setRestaurantName(e.target.value)}
                   placeholder="Grandma Zorp's"
+                  autoComplete="organization"
                   disabled={busy}
                 />
-              </label>
+              </span>
+            </label>
+          )}
+
+          {error && (
+            <p className="pp-alert" role="alert">
+              <Icon name="alert" size={18} />
+              {error}
+            </p>
+          )}
+
+          <button type="submit" className="pp-btn pp-btn--block" disabled={busy}>
+            {busy ? (
+              <>
+                {isRegister ? "Filing the paperwork…" : "Checking the register…"}
+              </>
+            ) : (
+              <>
+                <Icon name="user" size={16} />
+                {isRegister ? "Open the account" : "Sign in"}
+              </>
             )}
+          </button>
+        </form>
 
-            {error && (
-              <p className="pp-login-error" role="alert">
-                {error}
-              </p>
-            )}
-
-            <button
-              type="submit"
-              className="pp-btn pp-btn-primary pp-btn-block"
-              disabled={busy}
-            >
-              {busy ? (
-                <>
-                  <span className="pp-spin" aria-hidden="true" />
-                  {isRegister ? "Creating account…" : "Verifying across timelines…"}
-                </>
-              ) : (
-                <>
-                  <Icon name="user" size={16} />
-                  {isRegister ? "Create account" : "Sign in"}
-                </>
-              )}
-            </button>
-          </form>
-
-          <p className="pp-login-note">
-            {isRegister
-              ? isOwner
-                ? "You'll get a brand-new kitchen to manage — set its photo, dishes, and details from your dashboard."
-                : "Free forever in every reality. The backend is mocked in-browser; nothing leaves your machine."
-              : "Demo: sign in as owner@neutrino.pp (any 4+ char password), or create your own account."}
-          </p>
-        </div>
+        <p className="pp-fine pp-auth__note">
+          {isRegister
+            ? isOwner
+              ? "You will be issued an empty kitchen and a licence number. Stock it from the kitchen desk."
+              : "No charge, in any currency. The backend is mocked in your browser — nothing leaves this machine."
+            : null}
+          {!isRegister && (
+            <>
+              Demo credentials: <code>owner@neutrino.pp</code> with any password
+              of four characters or more. Or open an account; it costs nothing
+              and persists only in this browser.
+            </>
+          )}
+        </p>
       </div>
     </div>
   );

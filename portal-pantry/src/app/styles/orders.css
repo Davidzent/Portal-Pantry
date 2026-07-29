@@ -1,0 +1,254 @@
+/* ==========================================================================
+   Placing an order, and the record of orders already placed.
+
+   Checkout is the payoff, so it takes the whole viewport and arrives through
+   the same portal reveal the menu uses — the order literally goes through one.
+   Order history is a reference list, so it stays a quiet centred dialog.
+
+   This is the screen where green is most earned: it confirms and it transacts.
+   ========================================================================== */
+
+/* ---- Transit: the placing → confirmed sequence -------------------------- */
+
+.pp-transit {
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: var(--pp-s-5);
+  min-height: 100svh;
+  padding: var(--pp-s-7) var(--pp-gutter);
+  text-align: center;
+}
+
+.pp-transit__title {
+  font-size: var(--pp-t-40);
+  letter-spacing: -0.025em;
+}
+
+.pp-transit__sub {
+  max-width: 46ch;
+  font-size: var(--pp-t-16);
+  line-height: 1.6;
+  color: var(--pp-text-2);
+}
+
+/* The docket number. The one piece of the paperwork worth keeping. */
+.pp-docket {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--pp-s-3);
+  padding: var(--pp-s-3) var(--pp-s-4);
+  background: var(--pp-well);
+  border: 1px solid var(--pp-line);
+  border-radius: var(--pp-r);
+  font-family: var(--pp-utility);
+  font-size: var(--pp-t-14);
+  color: var(--pp-text);
+}
+
+.pp-docket span:first-child {
+  color: var(--pp-text-3);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-size: var(--pp-t-12);
+}
+
+/* ---- The transit log ----------------------------------------------------
+   A checklist that timestamps itself as it goes, because a freight operator
+   would. Left-aligned inside a centred column: a log you read down, not a
+   row of decorative dots. */
+
+.pp-log {
+  display: grid;
+  gap: var(--pp-s-3);
+  width: min(440px, 100%);
+  text-align: left;
+}
+
+.pp-log li {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr) auto;
+  gap: var(--pp-s-3);
+  align-items: center;
+  font-size: var(--pp-t-14);
+  color: var(--pp-text-3);
+}
+
+.pp-log li.is-done {
+  color: var(--pp-text-2);
+}
+
+.pp-log li.is-current {
+  color: var(--pp-text);
+}
+
+.pp-log__dot {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border: 1px solid var(--pp-line-2);
+  border-radius: 50%;
+  color: var(--pp-portal-ink);
+}
+
+.is-done .pp-log__dot {
+  background: var(--pp-portal);
+  border-color: transparent;
+}
+
+/* The step in flight gets the only moving thing on screen. */
+.is-current .pp-log__dot {
+  border-color: var(--pp-portal-text);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .is-current .pp-log__dot {
+    animation: pp-log-pulse 1200ms var(--pp-ease) infinite;
+  }
+
+  @keyframes pp-log-pulse {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.35;
+    }
+  }
+}
+
+.pp-log__at {
+  font-family: var(--pp-utility);
+  font-size: var(--pp-t-12);
+  font-variant-numeric: tabular-nums;
+  color: var(--pp-text-3);
+}
+
+.pp-transit__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--pp-s-3);
+}
+
+/* ---- Order history ------------------------------------------------------ */
+
+.pp-record {
+  width: min(680px, 100%);
+  padding: var(--pp-s-6);
+}
+
+.pp-record__head {
+  display: grid;
+  gap: var(--pp-s-2);
+  margin-bottom: var(--pp-s-5);
+}
+
+.pp-record__title {
+  font-size: var(--pp-t-30);
+  letter-spacing: -0.025em;
+}
+
+.pp-record__sub {
+  font-size: var(--pp-t-14);
+  color: var(--pp-text-2);
+}
+
+.pp-record__list {
+  display: grid;
+  gap: var(--pp-s-3);
+}
+
+.pp-order {
+  padding: var(--pp-s-4);
+  background: var(--pp-well);
+  border: 1px solid var(--pp-line);
+  border-radius: var(--pp-r-lg);
+}
+
+.pp-order__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--pp-s-2);
+}
+
+/* Grid, not two inline spans — the meta line needs to sit under the id, and
+   margin does not apply to an inline box. */
+.pp-order__ident {
+  display: grid;
+  gap: 2px;
+}
+
+.pp-order__id {
+  font-family: var(--pp-utility);
+  font-size: var(--pp-t-14);
+  font-weight: 600;
+  color: var(--pp-text);
+}
+
+.pp-order__meta {
+  font-family: var(--pp-utility);
+  font-size: var(--pp-t-12);
+  color: var(--pp-text-3);
+}
+
+.pp-order__items {
+  display: grid;
+  gap: var(--pp-s-2);
+  margin: var(--pp-s-3) 0;
+  padding-top: var(--pp-s-3);
+  border-top: 1px solid var(--pp-line);
+}
+
+.pp-order__items li {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--pp-s-3);
+  font-size: var(--pp-t-14);
+  color: var(--pp-text-2);
+}
+
+.pp-order__items span:last-child {
+  font-family: var(--pp-utility);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.pp-order__total {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--pp-s-3);
+  padding-top: var(--pp-s-3);
+  border-top: 1px solid var(--pp-line);
+  font-size: var(--pp-t-14);
+  font-weight: 600;
+}
+
+.pp-order__total span:last-child {
+  font-family: var(--pp-utility);
+  font-size: var(--pp-t-16);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Delivered is the only status that gets the colour: it is a completed
+   transit. Everything else is a notice or a problem. */
+.pp-order__total .pp-is-delivered {
+  color: var(--pp-portal-text);
+}
+
+.pp-record__state {
+  padding-block: var(--pp-s-6);
+}
+
+@media (max-width: 480px) {
+  .pp-record {
+    padding: var(--pp-s-5);
+  }
+
+  .pp-transit {
+    padding: var(--pp-s-6) var(--pp-gutter);
+  }
+}

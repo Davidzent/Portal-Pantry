@@ -89,7 +89,7 @@ function requireAuth(db: Database, token: string | null): DbUser {
     ? db.users.find((u) => u.id === session.userId)
     : undefined;
   if (!user) {
-    throw new HttpError(401, "Session expired — beam in again.");
+    throw new HttpError(401, "Session expired. Sign in again — nothing on your manifest was lost.");
   }
   return user;
 }
@@ -112,12 +112,12 @@ function handleLogin(db: Database, raw: unknown): MockResponse {
   const body = (raw ?? {}) as LoginBody;
   const email = (body.email ?? "").trim().toLowerCase();
   if (!/^\S+@\S+\.\S+$/.test(email)) {
-    throw new HttpError(422, "That doesn't look like an email in any dimension.");
+    throw new HttpError(422, "That is not a valid email address in this dimension or any adjacent one.");
   }
   if ((body.password ?? "").length < 4) {
     throw new HttpError(
       401,
-      "Password rejected in all 5 realities. (Demo hint: 4+ characters.)",
+      "Password too short. Four characters minimum, in every reality we operate in.",
     );
   }
 
@@ -125,7 +125,7 @@ function handleLogin(db: Database, raw: unknown): MockResponse {
   if (!user) {
     throw new HttpError(
       404,
-      "No account with that email — create one to beam in.",
+      "No account on file for that address. Open one — it takes a moment.",
     );
   }
 
@@ -148,15 +148,15 @@ function handleRegister(db: Database, raw: unknown): MockResponse {
   const body = (raw ?? {}) as RegisterBody;
   const email = (body.email ?? "").trim().toLowerCase();
   if (!/^\S+@\S+\.\S+$/.test(email)) {
-    throw new HttpError(422, "That doesn't look like an email in any dimension.");
+    throw new HttpError(422, "That is not a valid email address in this dimension or any adjacent one.");
   }
   if ((body.password ?? "").length < 4) {
-    throw new HttpError(422, "Password must be at least 4 characters.");
+    throw new HttpError(422, "Password too short. Four characters minimum.");
   }
   if (db.users.some((u) => u.email === email)) {
     throw new HttpError(
       409,
-      "An account with that email already exists — sign in instead.",
+      "An account is already on file for that address. Sign in instead.",
     );
   }
   const role = body.role === "owner" ? "owner" : "customer";

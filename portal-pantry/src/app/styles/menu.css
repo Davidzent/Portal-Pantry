@@ -130,6 +130,13 @@
   padding-bottom: var(--pp-s-9);
 }
 
+/* A sheet whose content is already sized to the viewport (the checkout
+   sequence) must not carry the scroll padding, or it gains a scrollbar and
+   the "centred" content sits 48px above where it should. */
+.pp-sheet__inner--full {
+  padding-bottom: 0;
+}
+
 .pp-sheet__body {
   max-width: 860px;
   margin-inline: auto;

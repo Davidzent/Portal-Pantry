@@ -81,21 +81,21 @@ export async function login(
   const body = parseBody(credentialsSchema, rawBody);
   const email = (body.email ?? "").trim().toLowerCase();
   if (!EMAIL_RE.test(email)) {
-    throw new HttpError(422, "That doesn't look like an email in any dimension.");
+    throw new HttpError(422, "That is not a valid email address in this dimension or any adjacent one.");
   }
   const password = body.password ?? "";
   if (password.length < MIN_PASSWORD_LENGTH) {
-    throw new HttpError(401, "Password rejected in all 5 realities. (Demo hint: 4+ characters.)");
+    throw new HttpError(401, "Password too short. Four characters minimum, in every reality we operate in.");
   }
 
   const user = db.prepare("SELECT * FROM users WHERE email = ?").get(email) as unknown as
     | UserRow
     | undefined;
   if (!user) {
-    throw new HttpError(404, "No account with that email — create one to beam in.");
+    throw new HttpError(404, "No account on file for that address. Open one — it takes a moment.");
   }
   if (user.password_hash !== null && !(await verifyPassword(password, user.password_hash))) {
-    throw new HttpError(401, "Wrong password — that combination doesn't exist in this reality.");
+    throw new HttpError(401, "That address and password do not match on file. Check both.");
   }
 
   pruneExpiredSessions(db);
@@ -111,14 +111,14 @@ export async function register(
   const body = parseBody(credentialsSchema, rawBody);
   const email = (body.email ?? "").trim().toLowerCase();
   if (!EMAIL_RE.test(email)) {
-    throw new HttpError(422, "That doesn't look like an email in any dimension.");
+    throw new HttpError(422, "That is not a valid email address in this dimension or any adjacent one.");
   }
   const password = body.password ?? "";
   if (password.length < MIN_PASSWORD_LENGTH) {
-    throw new HttpError(422, "Password must be at least 4 characters.");
+    throw new HttpError(422, "Password too short. Four characters minimum.");
   }
   if (db.prepare("SELECT 1 FROM users WHERE email = ?").get(email) !== undefined) {
-    throw new HttpError(409, "An account with that email already exists — sign in instead.");
+    throw new HttpError(409, "An account is already on file for that address. Sign in instead.");
   }
   const role = body.role === "owner" ? "owner" : "customer";
   const restaurantName = (body.restaurantName ?? "").trim();

@@ -130,7 +130,10 @@ export default function PantryApp() {
   const [loginOpen, setLoginOpen] = useState(false);
   const [ordersOpen, setOrdersOpen] = useState(false);
   const [route, setRoute] = useState(readRoute);
-  const [placedTotal, setPlacedTotal] = useState(0);
+  const [placed, setPlaced] = useState<{ id: string; total: number } | null>(
+    null,
+  );
+  const [checkoutOrigin, setCheckoutOrigin] = useState<PortalOrigin | null>(null);
   const [allRestaurants, setAllRestaurants] = useState<Restaurant[]>([]);
   const [catalogLoading, setCatalogLoading] = useState(true);
   const [catalogError, setCatalogError] = useState<string | null>(null);
@@ -232,6 +235,11 @@ export default function PantryApp() {
       );
   }, [allRestaurants, dimension, category, query]);
 
+  /* Where this order actually lands. One definition, used by the manifest's
+     terms line, the order request, and the receipt. */
+  const deliverTo =
+    dimension === "All dimensions" ? (user?.dimension ?? "C-131") : dimension;
+
   const cartCount = cart.reduce((n, e) => n + e.qty, 0);
   const subtotal = cart.reduce((n, e) => n + e.price * e.qty, 0);
 
@@ -266,13 +274,11 @@ export default function PantryApp() {
   };
 
   const placeOrder = async () => {
-    const deliverTo =
-      dimension === "All dimensions" ? (user?.dimension ?? "C-131") : dimension;
     setOrderError(null);
     setPlacing(true);
     try {
       // The kitchen prices the order; the local `total` is display-only.
-      const placed = await createOrder({
+      const order = await createOrder({
         items: cart.map((e) => ({
           restaurantId: e.restaurantId,
           itemId: e.itemId,
@@ -280,7 +286,7 @@ export default function PantryApp() {
         })),
         dimension: deliverTo,
       });
-      setPlacedTotal(placed.total);
+      setPlaced({ id: order.id, total: order.total });
       setCart([]);
       setCheckoutOpen(true);
     } catch (err) {
@@ -297,7 +303,8 @@ export default function PantryApp() {
     }
   };
 
-  const startCheckout = () => {
+  const startCheckout = (origin: PortalOrigin) => {
+    setCheckoutOrigin(origin);
     setDrawerOpen(false);
     if (user) {
       void placeOrder();
@@ -322,11 +329,7 @@ export default function PantryApp() {
     <Manifest
       cart={cart}
       subtotal={subtotal}
-      dimension={
-        dimension === "All dimensions"
-          ? (user?.dimension ?? "C-131")
-          : dimension
-      }
+      dimension={deliverTo}
       onChangeQty={changeQty}
       onCheckout={startCheckout}
       manifestId={manifestId}
@@ -622,9 +625,12 @@ export default function PantryApp() {
         </CartDrawer>
       )}
 
-      {checkoutOpen && (
+      {checkoutOpen && placed && (
         <CheckoutModal
-          total={placedTotal}
+          total={placed.total}
+          docket={placed.id}
+          dimension={deliverTo}
+          origin={checkoutOrigin}
           onClose={() => setCheckoutOpen(false)}
           onFinish={() => setCheckoutOpen(false)}
           onViewOrders={() => {

@@ -272,6 +272,59 @@
   color: var(--pp-teal-ink);
 }
 
+/* ---- Segmented control --------------------------------------------------
+   Two or three mutually exclusive options. A recessed track with one raised
+   segment — the same recessed/raised logic the fields and panels use, so it
+   needs no colour of its own to read as selected. */
+
+.pp-segment {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: 4px;
+  padding: 4px;
+  background: var(--pp-well);
+  border: 1px solid var(--pp-line);
+  border-radius: var(--pp-r);
+}
+
+.pp-segment button {
+  min-height: 44px; /* touch target floor — the 4px track padding is not part of it */
+  padding: 0 var(--pp-s-3);
+  border: 1px solid transparent;
+  border-radius: var(--pp-r-sm);
+  background: none;
+  color: var(--pp-text-3);
+  font-size: var(--pp-t-14);
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background var(--pp-fast) var(--pp-ease),
+    color var(--pp-fast) var(--pp-ease);
+}
+
+.pp-segment button:hover:not([aria-pressed="true"]) {
+  color: var(--pp-text-2);
+  background: var(--pp-surface);
+}
+
+.pp-segment button[aria-pressed="true"] {
+  background: var(--pp-surface-2);
+  border-color: var(--pp-line);
+  color: var(--pp-text);
+  box-shadow: var(--pp-e1), inset 0 1px 0 var(--pp-highlight);
+}
+
+.pp-segment button:focus-visible {
+  outline-offset: -1px;
+}
+
+.pp-segment button[disabled] {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
 /* ---- Tag: a small stated fact ------------------------------------------
    The rotated adhesive "stamp" went with the retro surface. These are flat
    tinted pills — same job, current register. */

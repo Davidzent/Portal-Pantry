@@ -16,7 +16,7 @@ export interface AuthUser {
 
 export type OwnerUser = AuthUser & { restaurantId: string };
 
-const SESSION_EXPIRED = "Session expired — beam in again.";
+const SESSION_EXPIRED = "Session expired. Sign in again — nothing on your manifest was lost.";
 
 export function bearerToken(req: Request): string | null {
   const match = /^Bearer\s+(.+)$/i.exec(req.headers.authorization ?? "");

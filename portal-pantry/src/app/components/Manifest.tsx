@@ -2,13 +2,14 @@ import { Icon } from "./Icon";
 import { Portal } from "./Portal";
 import { CURRENCY, PORTAL_TOLL } from "../data";
 import type { CartEntry } from "../PantryApp";
+import type { PortalOrigin } from "./RestaurantModal";
 
 interface ManifestProps {
   cart: CartEntry[];
   subtotal: number;
   dimension: string;
   onChangeQty: (key: string, delta: number) => void;
-  onCheckout: () => void;
+  onCheckout: (origin: PortalOrigin) => void;
   /** Stable per-session so the manifest number does not churn on every render. */
   manifestId: string;
   busy?: boolean;
@@ -30,9 +31,12 @@ export default function Manifest({
   manifestId,
   busy = false,
 }: ManifestProps) {
+  /* Must match what the server charges: subtotal + the flat toll, and nothing
+     else. The 8% reality tax is a deduction from the KITCHEN's payout, not a
+     charge on the customer — showing it here quoted a total that was never
+     taken, so the button promised one number and the receipt showed another. */
   const toll = cart.length > 0 ? PORTAL_TOLL : 0;
-  const tax = Math.round(subtotal * 0.08);
-  const total = subtotal + toll + tax;
+  const total = subtotal + toll;
   const empty = cart.length === 0;
 
   return (
@@ -107,13 +111,6 @@ export default function Manifest({
                 {CURRENCY}
               </span>
             </p>
-            <p className="pp-ledger__row">
-              <span>Reality tax (8%)</span>
-              <span>
-                {tax}
-                {CURRENCY}
-              </span>
-            </p>
           </div>
 
           <p className="pp-total">
@@ -127,7 +124,12 @@ export default function Manifest({
           <button
             type="button"
             className="pp-btn pp-btn--go pp-btn--block"
-            onClick={onCheckout}
+            onClick={(e) => {
+              /* The checkout portal opens from this button — the control that
+                 actually sends the order is where the portal should appear. */
+              const r = e.currentTarget.getBoundingClientRect();
+              onCheckout({ x: r.left + r.width / 2, y: r.top + r.height / 2 });
+            }}
             disabled={busy}
           >
             {busy ? (

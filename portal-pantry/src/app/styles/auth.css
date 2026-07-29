@@ -1,0 +1,78 @@
+/* ==========================================================================
+   Auth — sign in and account creation.
+
+   A dialog, not a screen: it is a short interruption in someone else's task,
+   so it stays small, centred and quick to dismiss. The register form grows to
+   four fields, and the panel has to absorb that without jumping the layout.
+
+   Note on colour: the submit button is NOT green. Signing in neither
+   transports nor transacts, and the whole point of rationing the colour is
+   that it does not leak onto "the most important button on this screen".
+   It is prominent by being the only full-width control here.
+   ========================================================================== */
+
+.pp-auth {
+  width: min(420px, 100%);
+  padding: var(--pp-s-6);
+}
+
+.pp-auth__head {
+  display: grid;
+  gap: var(--pp-s-3);
+  justify-items: start;
+  margin-bottom: var(--pp-s-5);
+}
+
+.pp-auth__kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--pp-s-2);
+}
+
+.pp-auth__title {
+  font-size: var(--pp-t-30);
+  letter-spacing: -0.025em;
+}
+
+.pp-auth__sub {
+  font-size: var(--pp-t-14);
+  line-height: 1.55;
+  color: var(--pp-text-2);
+}
+
+.pp-auth__form {
+  display: grid;
+  gap: var(--pp-s-4);
+  margin-top: var(--pp-s-5);
+}
+
+/* Label above field, not beside it — the register form reaches four rows and
+   an inline label would push the inputs to unusable widths at 320px. */
+.pp-form-row {
+  display: grid;
+  gap: var(--pp-s-2);
+}
+
+.pp-form-row .pp-field-label {
+  margin-bottom: 0;
+}
+
+.pp-auth__note {
+  margin-top: var(--pp-s-5);
+  padding-top: var(--pp-s-4);
+  border-top: 1px solid var(--pp-line);
+}
+
+/* The demo credentials are the one thing a stranger actually needs, so they
+   are set in the utility face and not buried in the prose around them. */
+.pp-auth__note code {
+  font-family: var(--pp-utility);
+  font-size: var(--pp-t-12);
+  color: var(--pp-teal);
+}
+
+@media (max-width: 400px) {
+  .pp-auth {
+    padding: var(--pp-s-5);
+  }
+}
