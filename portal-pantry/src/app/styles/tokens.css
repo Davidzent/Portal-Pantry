@@ -1,0 +1,118 @@
+:root {
+  /* ---- Surfaces -------------------------------------------------------
+     Neutral with a faint teal cast, so the chrome and the base agree. Never
+     pure black — #000 kills the sense of layering these tokens depend on.   */
+
+  --pp-bg: #0d1112; /* the canvas                                */
+  --pp-surface: #141a1b; /* cards, panels, the top bar                */
+  --pp-surface-2: #1b2223; /* raised: hovered rows, chips               */
+  --pp-surface-3: #232b2c; /* highest: menus, pressed states            */
+  --pp-well: #0a0e0f; /* recessed: inputs, image wells             */
+
+  /* ---- Text -----------------------------------------------------------
+     Never pure white either — #fff on a dark ground vibrates.               */
+
+  --pp-text: #e9edec; /* primary        14.9:1 on --pp-surface     */
+  --pp-text-2: #a7b3b1; /* secondary       7.4:1                     */
+  --pp-text-3: #7d8a88; /* muted, still AA 4.8:1                     */
+
+  /* ---- Hairlines ------------------------------------------------------
+     Borders are separators, not outlines. Low alpha, one pixel.             */
+
+  --pp-line: rgb(255 255 255 / 0.08);
+  --pp-line-2: rgb(255 255 255 / 0.14);
+  --pp-highlight: rgb(255 255 255 / 0.05); /* top-edge lift on raised things */
+  --pp-highlight-2: rgb(255 255 255 / 0.25); /* same, on a light fill        */
+
+  /* ---- Accents --------------------------------------------------------
+     Portal green is still rationed to things that transport, transact or
+     confirm. On a dark ground it is the one luminous colour in the app, so
+     the rule matters more here, not less. Teal stays the interactive colour:
+     links, focus, active filters.                                            */
+
+  --pp-portal: #9be05a; /* the fill. dark text sits on it            */
+  --pp-portal-hi: #aee776; /* the same fill, hovered                    */
+  --pp-portal-ink: #0a1403; /* text ON green      13.4:1                 */
+  --pp-portal-text: #a8e86b; /* green as text/icon 11.6:1 on --pp-surface */
+  --pp-portal-dim: rgb(155 224 90 / 0.14); /* green wash for pressed/selected */
+
+  --pp-teal: #46c7c0; /* interactive text    8.1:1                 */
+  --pp-teal-fill: #12403f; /* filled chip / selected background          */
+  --pp-teal-ink: #d6f7f4; /* text on teal-fill                         */
+
+  --pp-yolk: #e8c55a; /* notices, ratings, paid-placement flags    */
+  --pp-yolk-fill: rgb(232 197 90 / 0.12);
+
+  --pp-salmon: #ec7f68; /* the ugly one: alerts, destructive, delisted */
+  --pp-salmon-fill: rgb(236 127 104 / 0.12);
+
+  /* ---- Type ------------------------------------------------------------ */
+  --pp-display: "PP Display", "PP Display Fallback", "Arial Black", sans-serif;
+  --pp-body: "PP Body", "PP Body Fallback", Arial, sans-serif;
+  --pp-utility: "PP Utility", "PP Utility Fallback", "Courier New", monospace;
+
+  --pp-t-12: 0.75rem;
+  --pp-t-13: 0.8125rem;
+  --pp-t-14: 0.875rem;
+  --pp-t-15: 0.9375rem;
+  --pp-t-16: 1rem;
+  --pp-t-18: 1.125rem;
+  --pp-t-20: 1.25rem;
+  --pp-t-24: 1.5rem;
+  --pp-t-30: 1.875rem;
+  --pp-t-40: clamp(2rem, 1.4rem + 2.6vw, 2.75rem);
+  --pp-t-60: clamp(2.5rem, 1.3rem + 5.4vw, 4rem);
+
+  /* ---- Space: 4px grid, used more generously than the last pass --------- */
+  --pp-s-1: 4px;
+  --pp-s-2: 8px;
+  --pp-s-3: 12px;
+  --pp-s-4: 16px;
+  --pp-s-5: 24px;
+  --pp-s-6: 32px;
+  --pp-s-7: 48px;
+  --pp-s-8: 64px;
+  --pp-s-9: 96px;
+
+  --pp-shell: 1280px;
+  --pp-rail: 356px;
+  --pp-gutter: clamp(20px, 4vw, 40px);
+
+  /* ---- Radii: regular and generous. No wobble. ------------------------- */
+  --pp-r-sm: 8px;
+  --pp-r: 12px;
+  --pp-r-lg: 16px;
+  --pp-r-xl: 22px;
+  --pp-r-pill: 999px;
+
+  /* ---- Elevation -------------------------------------------------------
+     Soft, large, low-opacity. Never a hard offset, never a glow.            */
+  --pp-e1: 0 1px 2px rgb(0 0 0 / 0.4);
+  --pp-e2:
+    0 4px 16px rgb(0 0 0 / 0.4), 0 1px 2px rgb(0 0 0 / 0.35);
+  --pp-e3:
+    0 16px 48px rgb(0 0 0 / 0.55), 0 2px 8px rgb(0 0 0 / 0.4);
+
+  /* ---- Motion ---------------------------------------------------------- */
+  --pp-fast: 130ms;
+  --pp-base: 220ms;
+  --pp-portal-dur: 520ms;
+  --pp-ease: cubic-bezier(0.2, 0, 0.13, 1);
+  --pp-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --pp-spring: cubic-bezier(0.34, 1.4, 0.64, 1);
+  /* The portal reveal needs its own curve. `--pp-ease-out` is an expo-out: at
+     a third of the duration it is already ~89% done, which makes the opening
+     read as an instant cut followed by a wait. This one grows visibly. */
+  --pp-ease-portal: cubic-bezier(0.5, 0, 0.25, 1);
+
+  color-scheme: dark;
+  accent-color: var(--pp-portal);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --pp-fast: 1ms;
+    --pp-base: 1ms;
+    --pp-portal-dur: 1ms;
+  }
+}

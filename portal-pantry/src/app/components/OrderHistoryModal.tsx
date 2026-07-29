@@ -1,20 +1,22 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Icon } from "./Icon";
-import { CURRENCY, PORTAL_TOLL } from "../data";
+import { Portal } from "./Portal";
+import { CURRENCY } from "../data";
 import { getOrders, type Order, type OrderStatus } from "../api/ordersApi";
 
-const STATUS_LABEL: Record<OrderStatus, string> = {
-  pending: "Cooking",
-  delivered: "Delivered",
-  "wrong-dimension": "Wrong dimension",
-  lost: "Lost in wormhole · refunded",
+/* Status is a fact about freight, so it is stated as one. Only `delivered`
+   gets the colour — a completed transit is the thing green is for. */
+const STATUS: Record<OrderStatus, { label: string; tone: string }> = {
+  pending: { label: "In transit", tone: "pp-tag--note" },
+  delivered: { label: "Delivered", tone: "pp-tag--go" },
+  "wrong-dimension": { label: "Misrouted", tone: "pp-tag--bad" },
+  lost: { label: "Lost · refunded", tone: "pp-tag--bad" },
 };
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleString(undefined, {
     month: "short",
     day: "numeric",
-    year: "numeric",
     hour: "2-digit",
     minute: "2-digit",
   });
@@ -25,10 +27,15 @@ export default function OrderHistoryModal({ onClose }: { onClose: () => void }) 
   const [error, setError] = useState(false);
   const closeRef = useRef<HTMLButtonElement>(null);
 
+  const onCloseRef = useRef(onClose);
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  });
+
   useEffect(() => {
     closeRef.current?.focus();
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape") onCloseRef.current();
     };
     document.addEventListener("keydown", onKey);
     document.body.style.overflow = "hidden";
@@ -36,29 +43,39 @@ export default function OrderHistoryModal({ onClose }: { onClose: () => void }) 
       document.removeEventListener("keydown", onKey);
       document.body.style.overflow = "";
     };
-  }, [onClose]);
+  }, []);
 
   useEffect(() => {
     let mounted = true;
-    getOrders()
-      .then((list) => {
+    getOrders().then(
+      (list) => {
         if (mounted) setOrders(list);
-      })
-      .catch(() => {
+      },
+      () => {
         if (mounted) setError(true);
-      });
+      },
+    );
     return () => {
       mounted = false;
     };
   }, []);
 
+  const retry = useCallback(() => {
+    setError(false);
+    setOrders(null);
+    getOrders().then(
+      (list) => setOrders(list),
+      () => setError(true),
+    );
+  }, []);
+
   return (
-    <div className="pp-backdrop" onClick={onClose}>
+    <div className="pp-backdrop pp-backdrop--center" onClick={onClose}>
       <div
-        className="pp-modal pp-orders"
+        className="pp-modal pp-record"
         role="dialog"
         aria-modal="true"
-        aria-label="Order history"
+        aria-labelledby="pp-record-title"
         onClick={(e) => e.stopPropagation()}
       >
         <button
@@ -66,71 +83,94 @@ export default function OrderHistoryModal({ onClose }: { onClose: () => void }) 
           type="button"
           className="pp-iconbtn pp-close"
           onClick={onClose}
-          aria-label="Close order history"
+          aria-label="Close the shipment record"
         >
           <Icon name="close" size={18} />
         </button>
 
-        <div className="pp-orders-body">
-          <h2 className="pp-checkout-title">Order history</h2>
-          <p className="pp-orders-sub">
-            Every portal we've opened for you — across all timelines.
+        <div className="pp-record__head">
+          <h2 className="pp-record__title" id="pp-record-title">
+            Shipment record
+          </h2>
+          <p className="pp-record__sub">
+            Every portal opened on this account, in this dimension, on file
+            indefinitely.
           </p>
+        </div>
 
-          {error && (
-            <p className="pp-login-error" role="alert">
-              The archive is refusing visitors right now. Try again later.
+        {error ? (
+          <div className="pp-state pp-record__state">
+            <Portal size={72} state="closed" />
+            <p className="pp-state__title">The archive is shut</p>
+            <p className="pp-state__body">
+              We could not reach the record. Your orders are unaffected — the
+              filing cabinet is simply not answering.
             </p>
-          )}
-
-          {!error && !orders && (
-            <p className="pp-orders-loading">
-              <span className="pp-spin pp-spin-green" aria-hidden="true" />
-              Fetching orders from the archive…
+            <button type="button" className="pp-btn" onClick={retry}>
+              Ask the archive again
+            </button>
+          </div>
+        ) : !orders ? (
+          <div className="pp-state pp-record__state">
+            <Portal size={72} state="charging" label="Loading your orders" />
+            <p className="pp-state__title">Retrieving</p>
+            <p className="pp-state__body">Pulling your file from the archive.</p>
+          </div>
+        ) : orders.length === 0 ? (
+          <div className="pp-state pp-record__state">
+            <Portal size={72} state="closed" />
+            <p className="pp-state__title">Nothing on file</p>
+            <p className="pp-state__body">
+              No portal has been opened on this account yet. The board is the
+              place to start one.
             </p>
-          )}
-
-          {orders && (
-            <ul className="pp-order-list">
-              {orders.map((order) => (
+          </div>
+        ) : (
+          <ul className="pp-record__list">
+            {orders.map((order) => {
+              const status = STATUS[order.status];
+              return (
                 <li className="pp-order" key={order.id}>
-                  <div className="pp-order-head">
-                    <span className="pp-order-id">Order {order.id}</span>
-                    <span className={`pp-status pp-status-${order.status}`}>
-                      {STATUS_LABEL[order.status]}
+                  <div className="pp-order__head">
+                    <span className="pp-order__ident">
+                      <span className="pp-order__id">{order.id}</span>
+                      <span className="pp-order__meta">
+                        {formatDate(order.placedAt)} · {order.dimension}
+                      </span>
                     </span>
+                    <span className={`pp-tag ${status.tone}`}>{status.label}</span>
                   </div>
-                  <p className="pp-order-meta">
-                    {formatDate(order.placedAt)} · {order.dimension}
-                  </p>
-                  <ul className="pp-order-items">
+
+                  <ul className="pp-order__items">
                     {order.items.map((item, i) => (
                       <li key={`${order.id}-${i}`}>
-                        <span className="pp-order-item-name">
+                        <span>
                           {item.qty}× {item.name}
                         </span>
-                        <span className="pp-order-item-price">
+                        <span>
                           {item.price * item.qty}
                           {CURRENCY}
                         </span>
                       </li>
                     ))}
                   </ul>
-                  <p className="pp-order-total">
-                    <span>
-                      Total (incl. {PORTAL_TOLL}
-                      {CURRENCY} toll)
-                    </span>
-                    <span>
+
+                  <p className="pp-order__total">
+                    <span>Total, toll included</span>
+                    <span
+                      className={
+                        order.status === "delivered" ? "pp-is-delivered" : undefined
+                      }
+                    >
                       {order.total}
                       {CURRENCY}
                     </span>
                   </p>
                 </li>
-              ))}
-            </ul>
-          )}
-        </div>
+              );
+            })}
+          </ul>
+        )}
       </div>
     </div>
   );

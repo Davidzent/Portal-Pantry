@@ -1,0 +1,497 @@
+/* ==========================================================================
+   Primitives. Screens compose these; nothing respecifies a card or a button.
+   ========================================================================== */
+
+/* ---- Panel: the surface object -----------------------------------------
+   Elevation is surface lightness + a hairline + a 1px top highlight. That
+   top highlight is what stops a dark panel reading as a flat hole. */
+
+.pp-panel {
+  background: var(--pp-surface);
+  border: 1px solid var(--pp-line);
+  border-radius: var(--pp-r-lg);
+  box-shadow: var(--pp-e1), inset 0 1px 0 var(--pp-highlight);
+}
+
+/* ---- Wordmark -----------------------------------------------------------
+   The mark's outer ring strokes with `currentColor`. Pinning it here keeps the
+   ring quiet wherever the mark is placed — the green centre does the talking,
+   and the ring should not compete with adjacent text at full brightness. */
+
+.pp-mark {
+  color: var(--pp-text-3);
+}
+
+/* ---- Divider ------------------------------------------------------------
+   One hand-drawn rule survives from the previous pass, used only as the tear
+   line in the manifest. Everywhere else a divider is a plain hairline. */
+
+.pp-rule {
+  height: 1px;
+  border: 0;
+  margin: var(--pp-s-4) 0;
+  background: var(--pp-line);
+}
+
+.pp-rule--tear {
+  height: 8px;
+  background: var(--ink-rule-a) repeat-x center / 240px 8px;
+  opacity: 0.5;
+}
+
+/* ---- Buttons ------------------------------------------------------------ */
+
+.pp-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--pp-s-2);
+  min-height: 44px;
+  padding: var(--pp-s-3) var(--pp-s-5);
+  border: 1px solid var(--pp-line-2);
+  border-radius: var(--pp-r);
+  background: var(--pp-surface-2);
+  color: var(--pp-text);
+  font-family: var(--pp-body);
+  font-size: var(--pp-t-15);
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: -0.005em;
+  text-align: center;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  box-shadow: var(--pp-e1), inset 0 1px 0 var(--pp-highlight);
+  transition:
+    background var(--pp-fast) var(--pp-ease),
+    border-color var(--pp-fast) var(--pp-ease),
+    transform var(--pp-fast) var(--pp-ease),
+    box-shadow var(--pp-fast) var(--pp-ease);
+}
+
+.pp-btn:hover {
+  background: var(--pp-surface-3);
+  border-color: var(--pp-line-2);
+}
+
+.pp-btn:active {
+  transform: translateY(1px);
+  box-shadow: none;
+}
+
+.pp-btn[disabled] {
+  cursor: not-allowed;
+  opacity: 0.5;
+  transform: none;
+}
+
+/* THE green button. Transports, transacts or confirms — nothing else. */
+.pp-btn--go {
+  background: var(--pp-portal);
+  border-color: transparent;
+  color: var(--pp-portal-ink);
+  font-weight: 700;
+  box-shadow: var(--pp-e2), inset 0 1px 0 var(--pp-highlight-2);
+}
+
+.pp-btn--go:hover {
+  background: var(--pp-portal-hi);
+  border-color: transparent;
+}
+
+.pp-btn--quiet {
+  background: transparent;
+  border-color: var(--pp-line);
+  box-shadow: none;
+}
+
+.pp-btn--quiet:hover {
+  background: var(--pp-surface-2);
+}
+
+.pp-btn--sm {
+  /* "Small" is font size and padding, not target size. 36px broke the 44px
+     floor everywhere this was used, so the class stays visually lighter while
+     still being a legal target. */
+  min-height: 44px;
+  padding: var(--pp-s-2) var(--pp-s-3);
+  font-size: var(--pp-t-13);
+  border-radius: var(--pp-r-sm);
+}
+
+.pp-btn--block {
+  width: 100%;
+}
+
+.pp-btn-link {
+  min-height: 44px;
+  padding: var(--pp-s-2) 0;
+  border: 0;
+  background: none;
+  color: var(--pp-teal);
+  font-family: var(--pp-body);
+  font-size: var(--pp-t-14);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.pp-btn-link:hover {
+  color: var(--pp-text);
+}
+
+.pp-iconbtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  flex: none;
+  padding: 0;
+  border: 1px solid var(--pp-line);
+  border-radius: var(--pp-r);
+  background: var(--pp-surface-2);
+  color: var(--pp-text-2);
+  cursor: pointer;
+  transition:
+    background var(--pp-fast) var(--pp-ease),
+    color var(--pp-fast) var(--pp-ease);
+}
+
+.pp-iconbtn:hover {
+  background: var(--pp-surface-3);
+  color: var(--pp-text);
+}
+
+/* ---- Form fields --------------------------------------------------------
+   Recessed rather than raised: an input is a hole in the surface. */
+
+.pp-field {
+  display: flex;
+  align-items: center;
+  gap: var(--pp-s-2);
+  min-height: 44px;
+  padding: 0 var(--pp-s-4);
+  background: var(--pp-well);
+  border: 1px solid var(--pp-line);
+  border-radius: var(--pp-r);
+  color: var(--pp-text-3);
+  transition:
+    border-color var(--pp-fast) var(--pp-ease),
+    background var(--pp-fast) var(--pp-ease);
+}
+
+.pp-field:hover {
+  border-color: var(--pp-line-2);
+}
+
+.pp-field:focus-within {
+  outline: 2px solid var(--pp-teal);
+  outline-offset: 2px;
+  border-color: transparent;
+}
+
+.pp-field input,
+.pp-field select {
+  flex: 1;
+  min-width: 0;
+  height: 42px;
+  border: 0;
+  background: none;
+  font-size: var(--pp-t-15);
+  color: var(--pp-text);
+  outline: none;
+}
+
+.pp-field input::placeholder {
+  color: var(--pp-text-3);
+}
+
+.pp-field select {
+  appearance: none;
+  font-family: var(--pp-utility);
+  font-size: var(--pp-t-13);
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.pp-field select option {
+  background: var(--pp-surface-2);
+  color: var(--pp-text);
+}
+
+.pp-field-label {
+  display: block;
+  margin-bottom: var(--pp-s-2);
+  font-family: var(--pp-utility);
+  font-size: var(--pp-t-12);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--pp-text-3);
+}
+
+/* ---- Chip: a filter toggle ---------------------------------------------- */
+
+.pp-chip {
+  min-height: 44px; /* touch target floor — do not shrink this */
+  padding: var(--pp-s-2) var(--pp-s-4);
+  border: 1px solid var(--pp-line);
+  border-radius: var(--pp-r-pill);
+  background: transparent;
+  color: var(--pp-text-2);
+  font-size: var(--pp-t-14);
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    background var(--pp-fast) var(--pp-ease),
+    color var(--pp-fast) var(--pp-ease),
+    border-color var(--pp-fast) var(--pp-ease);
+}
+
+.pp-chip:hover {
+  background: var(--pp-surface-2);
+  color: var(--pp-text);
+}
+
+.pp-chip[aria-pressed="true"] {
+  background: var(--pp-teal-fill);
+  border-color: var(--pp-teal);
+  color: var(--pp-teal-ink);
+}
+
+/* ---- Segmented control --------------------------------------------------
+   Two or three mutually exclusive options. A recessed track with one raised
+   segment — the same recessed/raised logic the fields and panels use, so it
+   needs no colour of its own to read as selected. */
+
+.pp-segment {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: 4px;
+  padding: 4px;
+  background: var(--pp-well);
+  border: 1px solid var(--pp-line);
+  border-radius: var(--pp-r);
+}
+
+.pp-segment button {
+  min-height: 44px; /* touch target floor — the 4px track padding is not part of it */
+  padding: 0 var(--pp-s-3);
+  border: 1px solid transparent;
+  border-radius: var(--pp-r-sm);
+  background: none;
+  color: var(--pp-text-3);
+  font-size: var(--pp-t-14);
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background var(--pp-fast) var(--pp-ease),
+    color var(--pp-fast) var(--pp-ease);
+}
+
+.pp-segment button:hover:not([aria-pressed="true"]) {
+  color: var(--pp-text-2);
+  background: var(--pp-surface);
+}
+
+.pp-segment button[aria-pressed="true"] {
+  background: var(--pp-surface-2);
+  border-color: var(--pp-line);
+  color: var(--pp-text);
+  box-shadow: var(--pp-e1), inset 0 1px 0 var(--pp-highlight);
+}
+
+.pp-segment button:focus-visible {
+  outline-offset: -1px;
+}
+
+.pp-segment button[disabled] {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+/* ---- Tag: a small stated fact ------------------------------------------
+   The rotated adhesive "stamp" went with the retro surface. These are flat
+   tinted pills — same job, current register. */
+
+.pp-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--pp-s-1);
+  padding: 3px var(--pp-s-2);
+  border: 1px solid var(--pp-line);
+  border-radius: var(--pp-r-sm);
+  background: rgb(0 0 0 / 0.45);
+  color: var(--pp-text-2);
+  font-family: var(--pp-utility);
+  font-size: var(--pp-t-12);
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+.pp-tag--note {
+  background: var(--pp-yolk-fill);
+  border-color: rgb(232 197 90 / 0.35);
+  color: var(--pp-yolk);
+}
+
+.pp-tag--bad {
+  background: var(--pp-salmon-fill);
+  border-color: rgb(236 127 104 / 0.35);
+  color: var(--pp-salmon);
+}
+
+.pp-tag--go {
+  background: var(--pp-portal-dim);
+  border-color: rgb(155 224 90 / 0.35);
+  color: var(--pp-portal-text);
+}
+
+/* ---- Utility face: codes, IDs, prices, disclaimers ---------------------- */
+
+.pp-code {
+  font-family: var(--pp-utility);
+  font-size: var(--pp-t-12);
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--pp-text-3);
+}
+
+.pp-fine {
+  font-family: var(--pp-utility);
+  font-size: var(--pp-t-12);
+  line-height: 1.6;
+  color: var(--pp-text-3);
+}
+
+/* ---- Ledger: a column of labelled amounts -------------------------------
+   Shared by the customer's manifest and the owner's payout breakdown. They
+   are the same object, so they are the same component. */
+
+.pp-ledger {
+  display: grid;
+  gap: var(--pp-s-2);
+  font-size: var(--pp-t-13);
+  color: var(--pp-text-3);
+}
+
+.pp-ledger__row {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--pp-s-3);
+}
+
+.pp-ledger__row span:last-child {
+  font-family: var(--pp-utility);
+  font-variant-numeric: tabular-nums;
+  color: var(--pp-text-2);
+}
+
+/* A deduction. Salmon because money leaving is where the eye should snag. */
+.pp-ledger__row--neg span:last-child {
+  color: var(--pp-salmon);
+}
+
+/* What actually lands in the account. Green: it is the payout. */
+.pp-ledger__row--total {
+  margin-top: var(--pp-s-2);
+  padding-top: var(--pp-s-3);
+  border-top: 1px solid var(--pp-line-2);
+  font-size: var(--pp-t-15);
+  font-weight: 600;
+  color: var(--pp-text);
+}
+
+.pp-ledger__row--total span:last-child {
+  font-size: var(--pp-t-18);
+  font-weight: 700;
+  color: var(--pp-portal-text);
+}
+
+/* ---- Notice strips ------------------------------------------------------ */
+
+.pp-note {
+  display: flex;
+  gap: var(--pp-s-2);
+  padding: var(--pp-s-3) var(--pp-s-4);
+  background: var(--pp-yolk-fill);
+  border: 1px solid rgb(232 197 90 / 0.28);
+  border-radius: var(--pp-r);
+  font-family: var(--pp-utility);
+  font-size: var(--pp-t-12);
+  line-height: 1.6;
+  color: var(--pp-yolk);
+}
+
+.pp-alert {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--pp-s-2);
+  padding: var(--pp-s-3) var(--pp-s-4);
+  background: var(--pp-salmon-fill);
+  border: 1px solid rgb(236 127 104 / 0.35);
+  border-radius: var(--pp-r);
+  color: var(--pp-salmon);
+  font-size: var(--pp-t-14);
+  line-height: 1.5;
+}
+
+.pp-alert svg {
+  flex: none;
+  margin-top: 2px;
+}
+
+/* ---- Quantity stepper --------------------------------------------------- */
+
+.pp-stepper {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--pp-line);
+  border-radius: var(--pp-r-sm);
+  background: var(--pp-well);
+  overflow: hidden;
+}
+
+.pp-stepper button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  /* 44px, both to hit the touch-target floor and because the stepper replaces
+     an Add button in place — they have to be the same height or the row jumps. */
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--pp-text-2);
+  cursor: pointer;
+  transition:
+    background var(--pp-fast) var(--pp-ease),
+    color var(--pp-fast) var(--pp-ease);
+}
+
+.pp-stepper button:hover {
+  background: var(--pp-portal-dim);
+  color: var(--pp-portal-text);
+}
+
+.pp-stepper button:focus-visible {
+  outline-offset: -2px;
+}
+
+.pp-stepper > span {
+  min-width: 28px;
+  align-self: stretch;
+  display: grid;
+  place-items: center;
+  text-align: center;
+  font-family: var(--pp-utility);
+  font-size: var(--pp-t-13);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--pp-text);
+  border-inline: 1px solid var(--pp-line);
+}

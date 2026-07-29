@@ -1,0 +1,68 @@
+/* ==========================================================================
+   Self-hosted webfonts. Regenerate with `bash scripts/build-fonts.sh`.
+
+   Three roles:
+     display  Bricolage Grotesque — heavy, over-wide, deliberately a bit wrong.
+              Depot signage. Wordmark and headings only, never body copy.
+     body     Public Sans — the US federal design system face. Government-issue
+              paperwork, and legible at 14px on a phone.
+     utility  Spline Sans Mono — order IDs, dimension codes, prices, receipts,
+              customs disclaimers. A receipt printer, not a code editor.
+
+   Each has a paired `… Fallback` face: a local Arial re-metricked with
+   size-adjust / ascent-override so the swap moves nothing. Zero CLS from
+   font loading, which the perf budget requires.
+   Numbers are emitted by scripts/build-fonts.sh — do not eyeball them.
+   ========================================================================== */
+
+@font-face {
+  font-family: "PP Display";
+  src: url("../fonts/display.woff2") format("woff2-variations");
+  font-weight: 200 800;
+  font-stretch: 75% 100%;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "PP Display Fallback";
+  src: local("Arial Bold"), local("Arial");
+  size-adjust: 118.94%;
+  ascent-override: 78.19%;
+  descent-override: 22.7%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: "PP Body";
+  src: url("../fonts/body.woff2") format("woff2-variations");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "PP Body Fallback";
+  src: local("Arial");
+  size-adjust: 123.36%;
+  ascent-override: 77.01%;
+  descent-override: 18.24%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: "PP Utility";
+  src: url("../fonts/utility.woff2") format("woff2-variations");
+  font-weight: 300 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "PP Utility Fallback";
+  src: local("Courier New");
+  size-adjust: 137.74%;
+  ascent-override: 69.95%;
+  descent-override: 17.17%;
+  line-gap-override: 0%;
+}

@@ -208,7 +208,7 @@ describe("owner dashboard", () => {
       const res = await request(ctx.app)
         .post("/owner/reviews/rev_2/reply")
         .set(bearer(token))
-        .send({ reply: "Aw geez Morty, thanks — gyoza clips are on the house next time." })
+        .send({ reply: "Noted with thanks — gyoza clips are on the house next time." })
         .expect(200);
       expect(res.body.review.reply).toContain("gyoza clips");
       expect(res.body.review.repliedAt).toBeTruthy();

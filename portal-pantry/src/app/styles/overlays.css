@@ -1,0 +1,136 @@
+/* ==========================================================================
+   Overlays.
+
+   The cart drawer is finished — below 1024px it IS the manifest rail, and it
+   reuses the same `.pp-manifest` markup rather than restating it.
+
+   `.pp-modal` is the shared dialog shell — surface, radius, elevation and
+   nothing else. Anything about a specific dialog's contents lives in that
+   dialog's own stylesheet (auth.css, orders.css, menu.css).
+   ========================================================================== */
+
+.pp-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  padding: var(--pp-gutter);
+  background: rgb(4 6 6 / 0.7);
+  backdrop-filter: blur(3px);
+  overflow-y: auto;
+}
+
+.pp-backdrop--center {
+  align-items: center;
+  justify-content: center;
+}
+
+.pp-backdrop--right {
+  align-items: stretch;
+  justify-content: flex-end;
+  padding: 0;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .pp-backdrop {
+    animation: pp-fade var(--pp-base) var(--pp-ease) both;
+  }
+
+  @keyframes pp-fade {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+}
+
+/* ---- Cart drawer (finished) --------------------------------------------- */
+
+.pp-drawer {
+  display: flex;
+  flex-direction: column;
+  width: min(420px, 100%);
+  max-height: 100svh;
+  overflow-y: auto;
+  background: var(--pp-surface);
+  border-left: 1px solid var(--pp-line-2);
+  box-shadow: var(--pp-e3);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .pp-drawer {
+    animation: pp-drawer-in 300ms var(--pp-ease-out) both;
+  }
+
+  @keyframes pp-drawer-in {
+    from {
+      transform: translateX(32px);
+      opacity: 0;
+    }
+    to {
+      transform: none;
+      opacity: 1;
+    }
+  }
+}
+
+.pp-drawer__head {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--pp-s-3);
+  padding: var(--pp-s-4) var(--pp-s-5);
+  background: var(--pp-surface);
+  border-bottom: 1px solid var(--pp-line);
+}
+
+.pp-drawer__head h2 {
+  font-size: var(--pp-t-20);
+  letter-spacing: -0.015em;
+}
+
+.pp-drawer__alert {
+  margin: var(--pp-s-4) var(--pp-s-5) 0;
+}
+
+/* ---- Dialog shell ------------------------------------------------------- */
+
+.pp-modal {
+  position: relative;
+  width: min(760px, 100%);
+  margin: auto;
+  padding: var(--pp-s-6);
+  background: var(--pp-surface);
+  border: 1px solid var(--pp-line);
+  border-radius: var(--pp-r-xl);
+  box-shadow: var(--pp-e3), inset 0 1px 0 var(--pp-highlight);
+}
+
+/* Blanket element rules (`.pp-modal p`, `.pp-modal input`, …) used to live
+   here as scaffolding. They are gone: imported after primitives.css at equal
+   specificity, they silently outranked it and cost the auth form its field
+   borders and its error colour. Style dialog contents in the dialog's own
+   file. */
+
+.pp-close {
+  position: absolute;
+  top: var(--pp-s-4);
+  right: var(--pp-s-4);
+  z-index: 2;
+}
+
+/* Star rows — shared by the menu's reviews and the owner dashboard. */
+.pp-stars {
+  display: inline-flex;
+  gap: 2px;
+  color: var(--pp-yolk);
+}
+
+.pp-stars__off {
+  color: var(--pp-line-2);
+}

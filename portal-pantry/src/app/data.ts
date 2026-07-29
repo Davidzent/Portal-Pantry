@@ -1,11 +1,11 @@
-export const CURRENCY = "ƶ";
+export const CURRENCY = "¤";
 
 export const PORTAL_TOLL = 12;
 
 export const dimensions = [
   "All dimensions",
   "C-131",
-  "Ω-77",
+  "OMEGA-77",
   "B-612",
   "Pickle-9",
   "Fantasy-42",
@@ -90,7 +90,7 @@ export const restaurants: Restaurant[] = [
     name: "Quantum Quesadillas",
     tagline: "Simultaneously cheesy and not. You decide by observing.",
     category: "Human food",
-    dimension: "Ω-77",
+    dimension: "OMEGA-77",
     rating: 4.5,
     time: "10–20 min",
     fee: 8,
@@ -128,7 +128,7 @@ export const restaurants: Restaurant[] = [
     name: "Neutrino Noodles",
     tagline: "Ramen so light it phases through you. Zero calories, zero mercy.",
     category: "Alien delicacies",
-    dimension: "Ω-77",
+    dimension: "OMEGA-77",
     rating: 4.8,
     time: "8–14 min",
     fee: 5,

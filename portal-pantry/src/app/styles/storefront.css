@@ -1,0 +1,623 @@
+/* ==========================================================================
+   Storefront — the depot board.
+
+   Same structure as before: a scannable board of kitchens with the shipping
+   manifest pinned beside it at >=1024px, collapsing to a single column and a
+   drawer below that. What changed is density and depth, not the layout idea.
+   ========================================================================== */
+
+.pp-page {
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+}
+
+.pp-shell {
+  width: 100%;
+  max-width: var(--pp-shell);
+  margin-inline: auto;
+  padding-inline: var(--pp-gutter);
+}
+
+/* ---- Top bar ------------------------------------------------------------
+   Sits on the canvas rather than being a coloured slab. A hairline and a
+   slightly lifted surface are enough to separate it. */
+
+.pp-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  background: color-mix(in srgb, var(--pp-bg) 88%, transparent);
+  backdrop-filter: blur(14px);
+  border-bottom: 1px solid var(--pp-line);
+}
+
+@supports not (backdrop-filter: blur(1px)) {
+  .pp-topbar {
+    background: var(--pp-bg);
+  }
+}
+
+.pp-topbar__inner {
+  display: flex;
+  align-items: center;
+  gap: var(--pp-s-3);
+  min-height: 68px;
+  padding-block: var(--pp-s-2);
+}
+
+.pp-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--pp-s-3);
+  min-height: 44px;
+  margin-right: auto;
+  color: var(--pp-text);
+  text-decoration: none;
+}
+
+.pp-brand__name {
+  font-family: var(--pp-display);
+  font-size: var(--pp-t-18);
+  font-weight: 700;
+  font-stretch: 96%;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+
+.pp-brand__name span {
+  display: block;
+  font-family: var(--pp-utility);
+  font-size: 10px;
+  font-weight: 400;
+  font-stretch: normal;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--pp-text-3);
+}
+
+.pp-topbar__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--pp-s-2);
+}
+
+.pp-user {
+  display: flex;
+  align-items: center;
+  gap: var(--pp-s-2);
+}
+
+.pp-user__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--pp-s-2);
+  min-height: 44px;
+  padding: 0 var(--pp-s-4);
+  border: 1px solid var(--pp-line);
+  border-radius: var(--pp-r);
+  background: var(--pp-surface);
+  color: var(--pp-text);
+  font-size: var(--pp-t-14);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--pp-fast) var(--pp-ease);
+}
+
+.pp-user__chip:hover {
+  background: var(--pp-surface-2);
+}
+
+.pp-cartbtn__count {
+  display: inline-grid;
+  place-items: center;
+  min-width: 20px;
+  height: 20px;
+  padding-inline: 6px;
+  border-radius: var(--pp-r-pill);
+  background: var(--pp-portal);
+  color: var(--pp-portal-ink);
+  font-family: var(--pp-utility);
+  font-size: 11px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---- Hero ---------------------------------------------------------------
+   The licence plate of a freight operator that should not legally exist. */
+
+.pp-hero {
+  display: grid;
+  gap: var(--pp-s-5);
+  padding-block: var(--pp-s-9) var(--pp-s-7);
+  max-width: 880px;
+}
+
+.pp-hero__plate {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--pp-s-2);
+}
+
+.pp-hero__title {
+  font-size: var(--pp-t-60);
+  max-width: 18ch;
+}
+
+/* The one word that transports. It may be green. */
+.pp-hero__title em {
+  font-style: normal;
+  color: var(--pp-portal-text);
+}
+
+.pp-hero__sub {
+  max-width: 58ch;
+  font-size: var(--pp-t-18);
+  line-height: 1.6;
+  color: var(--pp-text-2);
+}
+
+.pp-hero__tools {
+  display: grid;
+  gap: var(--pp-s-3);
+  max-width: 680px;
+  margin-top: var(--pp-s-2);
+}
+
+.pp-hero__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--pp-s-2);
+}
+
+.pp-field--dim {
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+.pp-field--dim select {
+  width: auto;
+}
+
+.pp-field--search {
+  flex: 1 1 280px;
+  min-width: 0;
+}
+
+.pp-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--pp-s-2);
+}
+
+/* ---- Board layout ------------------------------------------------------- */
+
+.pp-board {
+  display: grid;
+  gap: var(--pp-s-7);
+  padding-bottom: var(--pp-s-9);
+  align-items: start;
+}
+
+@media (min-width: 1024px) {
+  .pp-board {
+    grid-template-columns: minmax(0, 1fr) var(--pp-rail);
+  }
+
+  .pp-board__rail {
+    position: sticky;
+    top: calc(68px + var(--pp-s-5));
+  }
+}
+
+@media (max-width: 1023px) {
+  .pp-board__rail {
+    display: none;
+  }
+}
+
+.pp-board__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--pp-s-2);
+  margin-bottom: var(--pp-s-4);
+}
+
+.pp-board__count {
+  font-size: var(--pp-t-14);
+  color: var(--pp-text-3);
+}
+
+.pp-board__count strong {
+  color: var(--pp-text);
+  font-weight: 600;
+}
+
+/* ---- Kitchen cards ------------------------------------------------------ */
+
+.pp-grid {
+  display: grid;
+  gap: var(--pp-s-5);
+  grid-template-columns: repeat(auto-fill, minmax(248px, 1fr));
+}
+
+.pp-card {
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  overflow: hidden;
+  text-align: left;
+  cursor: pointer;
+  color: inherit;
+  transition:
+    transform var(--pp-base) var(--pp-ease-out),
+    box-shadow var(--pp-base) var(--pp-ease),
+    border-color var(--pp-base) var(--pp-ease);
+}
+
+.pp-card:hover {
+  transform: translateY(-3px);
+  border-color: var(--pp-line-2);
+  box-shadow: var(--pp-e3), inset 0 1px 0 var(--pp-highlight);
+}
+
+.pp-card:active {
+  transform: translateY(-1px);
+}
+
+/* The kitchen art is dark and saturated, which is exactly right on this
+   ground — it goes full bleed and does the work. A gradient scrim under the
+   flags keeps the tags legible over whatever the artwork happens to be. */
+.pp-card__cover {
+  position: relative;
+  display: block;
+  aspect-ratio: 4 / 3;
+  background: var(--pp-well);
+  overflow: hidden;
+}
+
+.pp-card__cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform var(--pp-base) var(--pp-ease-out);
+}
+
+.pp-card:hover .pp-card__cover img {
+  transform: scale(1.03);
+}
+
+.pp-card__cover::after {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 40%;
+  background: linear-gradient(to bottom, rgb(0 0 0 / 0.55), transparent);
+  pointer-events: none;
+}
+
+.pp-card__cover-blank {
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: var(--pp-s-2);
+  height: 100%;
+  color: var(--pp-text-3);
+  font-family: var(--pp-utility);
+  font-size: var(--pp-t-12);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.pp-card__flags {
+  position: absolute;
+  z-index: 1;
+  inset: var(--pp-s-3) var(--pp-s-3) auto var(--pp-s-3);
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--pp-s-2);
+  pointer-events: none;
+}
+
+/* Hover reveals the portal the card opens through. */
+.pp-card__portal {
+  position: absolute;
+  z-index: 1;
+  inset: auto var(--pp-s-3) var(--pp-s-3) auto;
+  opacity: 0;
+  transform: scale(0.5);
+  transition:
+    opacity var(--pp-base) var(--pp-ease),
+    transform var(--pp-base) var(--pp-spring);
+}
+
+.pp-card:hover .pp-card__portal,
+.pp-card:focus-visible .pp-card__portal {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.pp-card__body {
+  display: grid;
+  gap: var(--pp-s-2);
+  padding: var(--pp-s-4);
+}
+
+.pp-card__name {
+  font-family: var(--pp-display);
+  font-size: var(--pp-t-18);
+  font-weight: 700;
+  font-stretch: 96%;
+  letter-spacing: -0.015em;
+  line-height: 1.2;
+}
+
+.pp-card__tagline {
+  font-size: var(--pp-t-14);
+  line-height: 1.5;
+  color: var(--pp-text-2);
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+}
+
+.pp-card__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--pp-s-1) var(--pp-s-4);
+  margin-top: var(--pp-s-1);
+  padding-top: var(--pp-s-3);
+  border-top: 1px solid var(--pp-line);
+  font-family: var(--pp-utility);
+  font-size: var(--pp-t-12);
+  color: var(--pp-text-3);
+}
+
+.pp-card__meta span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.pp-card__meta svg {
+  color: var(--pp-text-3);
+}
+
+.pp-card__meta .pp-is-free {
+  color: var(--pp-portal-text);
+}
+
+/* ---- Manifest rail ------------------------------------------------------ */
+
+.pp-manifest {
+  padding: var(--pp-s-5);
+}
+
+.pp-manifest__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--pp-s-2);
+}
+
+.pp-manifest__title {
+  font-family: var(--pp-display);
+  font-size: var(--pp-t-18);
+  letter-spacing: -0.015em;
+}
+
+.pp-manifest__id {
+  font-family: var(--pp-utility);
+  font-size: var(--pp-t-12);
+  color: var(--pp-text-3);
+}
+
+.pp-manifest__list {
+  display: grid;
+  gap: var(--pp-s-4);
+}
+
+.pp-line {
+  display: grid;
+  gap: var(--pp-s-2);
+}
+
+.pp-line__name {
+  font-size: var(--pp-t-15);
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.pp-line__from {
+  font-family: var(--pp-utility);
+  font-size: var(--pp-t-12);
+  color: var(--pp-text-3);
+}
+
+.pp-line__controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--pp-s-2);
+}
+
+.pp-line__price {
+  font-family: var(--pp-utility);
+  font-size: var(--pp-t-14);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* The total is where money becomes real. Green earns it here. */
+.pp-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--pp-s-3);
+  margin: var(--pp-s-4) 0;
+  padding-top: var(--pp-s-4);
+  border-top: 1px solid var(--pp-line-2);
+  font-size: var(--pp-t-15);
+  font-weight: 600;
+}
+
+.pp-total span:last-child {
+  font-family: var(--pp-utility);
+  font-size: var(--pp-t-20);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--pp-portal-text);
+}
+
+.pp-manifest__terms {
+  margin-top: var(--pp-s-4);
+}
+
+.pp-manifest__terms strong {
+  color: var(--pp-text-2);
+  font-weight: 500;
+}
+
+/* ---- States: empty, loading, error -------------------------------------- */
+
+.pp-state {
+  display: grid;
+  justify-items: center;
+  gap: var(--pp-s-4);
+  padding: var(--pp-s-7) var(--pp-s-4);
+  text-align: center;
+}
+
+.pp-state--rail {
+  padding: var(--pp-s-6) 0 var(--pp-s-4);
+}
+
+.pp-state__title {
+  font-family: var(--pp-display);
+  font-size: var(--pp-t-20);
+  letter-spacing: -0.015em;
+}
+
+.pp-state__body {
+  max-width: 42ch;
+  font-size: var(--pp-t-14);
+  line-height: 1.6;
+  color: var(--pp-text-3);
+}
+
+.pp-state--board {
+  padding-block: var(--pp-s-9);
+}
+
+/* ---- Footer ------------------------------------------------------------- */
+
+.pp-footer {
+  margin-top: auto;
+  padding-block: var(--pp-s-7);
+  border-top: 1px solid var(--pp-line);
+}
+
+.pp-footer__inner {
+  display: grid;
+  gap: var(--pp-s-4);
+}
+
+.pp-footer__brand {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--pp-s-2);
+  font-family: var(--pp-display);
+  font-size: var(--pp-t-16);
+  letter-spacing: -0.015em;
+  color: var(--pp-text-2);
+}
+
+.pp-footer__fine {
+  max-width: 76ch;
+}
+
+.pp-footer a {
+  color: var(--pp-text-2);
+}
+
+.pp-footer a:hover {
+  color: var(--pp-portal-text);
+}
+
+/* ---- Page-load reveal --------------------------------------------------- */
+
+@media (prefers-reduced-motion: no-preference) {
+  .pp-reveal {
+    animation: pp-settle 420ms var(--pp-ease-out) both;
+  }
+
+  .pp-grid .pp-reveal:nth-child(1) { animation-delay: 0ms; }
+  .pp-grid .pp-reveal:nth-child(2) { animation-delay: 50ms; }
+  .pp-grid .pp-reveal:nth-child(3) { animation-delay: 100ms; }
+  .pp-grid .pp-reveal:nth-child(4) { animation-delay: 150ms; }
+  .pp-grid .pp-reveal:nth-child(5) { animation-delay: 200ms; }
+  .pp-grid .pp-reveal:nth-child(6) { animation-delay: 250ms; }
+  .pp-grid .pp-reveal:nth-child(n + 7) { animation-delay: 300ms; }
+
+  @keyframes pp-settle {
+    from {
+      opacity: 0;
+      transform: translateY(14px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+}
+
+/* ---- Narrow ------------------------------------------------------------- */
+
+@media (max-width: 560px) {
+  /* Brand and actions cannot share a 320px row — the buttons get clipped.
+     Two rows: the wordmark, then the actions splitting the full width. */
+  .pp-topbar__inner {
+    flex-wrap: wrap;
+    row-gap: var(--pp-s-2);
+    padding-block: var(--pp-s-3);
+  }
+
+  .pp-brand__name span {
+    display: none; /* wraps to three lines at this width and earns nothing */
+  }
+
+  .pp-topbar__actions {
+    flex: 1 0 100%;
+  }
+
+  .pp-topbar__actions > .pp-btn,
+  .pp-topbar__actions > .pp-user {
+    flex: 1;
+  }
+
+  .pp-user__chip {
+    flex: 1;
+    justify-content: center;
+  }
+
+  .pp-hero {
+    padding-block: var(--pp-s-6) var(--pp-s-5);
+    gap: var(--pp-s-4);
+  }
+
+  .pp-grid {
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: var(--pp-s-4);
+  }
+
+  .pp-board {
+    gap: var(--pp-s-5);
+  }
+}

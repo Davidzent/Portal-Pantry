@@ -1,31 +1,30 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { CSSProperties } from "react";
 import { Icon } from "./Icon";
+import { Stars } from "./Stars";
 import { CURRENCY, type MenuItem, type Restaurant } from "../data";
 import { addReview, getRestaurantReviews, type Review } from "../api/storeApi";
 import { ApiError, type User } from "../api/authApi";
 import { imageUrl } from "../images";
 import type { CartEntry } from "../PantryApp";
 
+/** Where on screen the portal opened from — the centre of the clicked card. */
+export interface PortalOrigin {
+  x: number;
+  y: number;
+}
+
 interface RestaurantModalProps {
   restaurant: Restaurant;
   cart: CartEntry[];
   canOrder: boolean;
   user: User | null;
+  origin: PortalOrigin | null;
   onAdd: (restaurant: Restaurant, item: MenuItem) => void;
   onChangeQty: (key: string, delta: number) => void;
   onClose: () => void;
   onOpenCart: () => void;
   onReviewAdded: () => void;
-}
-
-function Stars({ rating }: { rating: number }) {
-  return (
-    <span className="pp-stars" aria-label={`${rating} out of 5 stars`}>
-      {"★★★★★".slice(0, rating)}
-      <span className="pp-stars-empty">{"★★★★★".slice(rating)}</span>
-    </span>
-  );
 }
 
 function ReviewForm({
@@ -43,7 +42,7 @@ function ReviewForm({
 
   const submit = async () => {
     if (!rating || !body.trim()) {
-      setError("Pick a rating and write a few words.");
+      setError("A rating and a few words are required. The form is the form.");
       return;
     }
     setBusy(true);
@@ -54,7 +53,11 @@ function ReviewForm({
       setRating(0);
       setBody("");
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Couldn't post — try again.");
+      setError(
+        err instanceof ApiError
+          ? err.message
+          : "The filing did not go through. Nothing was recorded. Try again.",
+      );
     } finally {
       setBusy(false);
     }
@@ -62,12 +65,12 @@ function ReviewForm({
 
   return (
     <div className="pp-review-form">
-      <div className="pp-star-picker" role="radiogroup" aria-label="Your rating">
+      <div className="pp-stars-pick" role="group" aria-label="Your rating">
         {[1, 2, 3, 4, 5].map((n) => (
           <button
             key={n}
             type="button"
-            className={`pp-star-btn${(hover || rating) >= n ? " on" : ""}`}
+            className={`pp-star-btn${(hover || rating) >= n ? " is-on" : ""}`}
             onMouseEnter={() => setHover(n)}
             onMouseLeave={() => setHover(0)}
             onClick={() => setRating(n)}
@@ -75,32 +78,32 @@ function ReviewForm({
             aria-pressed={rating === n}
             disabled={busy}
           >
-            ★
+            <Icon name="star" size={22} />
           </button>
         ))}
       </div>
       <textarea
         className="pp-review-input"
-        rows={2}
-        placeholder="How was it? (Be honest — it's the multiverse.)"
+        placeholder="What arrived, what condition it was in, and whether it was still the same dish on delivery."
         value={body}
         onChange={(e) => setBody(e.target.value)}
         disabled={busy}
-        aria-label="Your review"
+        aria-label="Your account of the delivery"
       />
       {error && (
-        <p className="pp-edit-error" role="alert">
+        <p className="pp-alert" role="alert">
+          <Icon name="alert" size={18} />
           {error}
         </p>
       )}
-      <button
-        type="button"
-        className="pp-btn pp-btn-primary pp-btn-sm"
-        onClick={submit}
-        disabled={busy}
-      >
-        {busy ? "Posting…" : "Post review"}
-      </button>
+      <div className="pp-review-form__actions">
+        <button type="button" className="pp-btn" onClick={submit} disabled={busy}>
+          {busy ? "Filing…" : "File it"}
+        </button>
+        <span className="pp-fine">
+          Filed reports are public and cannot be withdrawn.
+        </span>
+      </div>
     </div>
   );
 }
@@ -110,32 +113,54 @@ export default function RestaurantModal({
   cart,
   canOrder,
   user,
+  origin,
   onAdd,
   onChangeQty,
   onClose,
   onOpenCart,
   onReviewAdded,
 }: RestaurantModalProps) {
-  const closeRef = useRef<HTMLButtonElement>(null);
+  const backRef = useRef<HTMLButtonElement>(null);
   const [reviews, setReviews] = useState<Review[] | null>(null);
   const [zoom, setZoom] = useState<MenuItem | null>(null);
-  const zoomRef = useRef<MenuItem | null>(null);
-  zoomRef.current = zoom;
+  const [closing, setClosing] = useState(false);
 
+  /* Kept current in an effect, never assigned during render, so the close
+     timer does not restart every time the parent hands us a new callback. */
+  const onCloseRef = useRef(onClose);
   useEffect(() => {
-    closeRef.current?.focus();
+    onCloseRef.current = onClose;
+  });
+
+  /* Closing runs the portal shut and *then* unmounts, so the exit animation is
+     visible. `setClosing` is the only trigger; the timer below owns the
+     unmount. Under reduced motion the animation is 1ms, so the 300ms wait is
+     the only thing the user perceives — short enough not to feel stuck. */
+  useEffect(() => {
+    if (!closing) return;
+    const t = window.setTimeout(onCloseRef.current, 300);
+    return () => window.clearTimeout(t);
+  }, [closing]);
+
+  /* Escape closes the photo first, then the sheet. Re-registering on `zoom`
+     keeps the handler honest without reaching for a ref during render. */
+  useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== "Escape") return;
-      if (zoomRef.current) setZoom(null);
-      else onClose();
+      if (zoom) setZoom(null);
+      else setClosing(true);
     };
     document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [zoom]);
+
+  useEffect(() => {
+    backRef.current?.focus();
     document.body.style.overflow = "hidden";
     return () => {
-      document.removeEventListener("keydown", onKey);
       document.body.style.overflow = "";
     };
-  }, [onClose]);
+  }, []);
 
   const loadReviews = useCallback(async () => {
     try {
@@ -158,168 +183,207 @@ export default function RestaurantModal({
 
   const bannerUrl = imageUrl(restaurant.image);
   const zoomUrl = zoom ? imageUrl(zoom.image) : undefined;
+  const listed = restaurant.items;
+
+  /* Geometry, not style: the point the portal opens from. */
+  const originStyle = origin
+    ? ({ "--pp-ox": `${origin.x}px`, "--pp-oy": `${origin.y}px` } as CSSProperties)
+    : undefined;
 
   return (
-    <div className="pp-backdrop" onClick={onClose}>
+    <div className="pp-sheet-layer" style={originStyle}>
+      {!closing && <span className="pp-flare" aria-hidden="true" />}
+
       <div
-        className="pp-modal"
+        className={`pp-sheet${closing ? " is-closing" : ""}`}
         role="dialog"
         aria-modal="true"
-        aria-label={restaurant.name}
-        onClick={(e) => e.stopPropagation()}
+        aria-label={`${restaurant.name} — menu`}
       >
-        <button
-          ref={closeRef}
-          type="button"
-          className="pp-iconbtn pp-close"
-          onClick={onClose}
-          aria-label="Close menu"
-        >
-          <Icon name="close" size={18} />
-        </button>
+        <div className="pp-sheet__inner">
+          <div className="pp-sheet__bar">
+            <div className="pp-shell">
+              <button
+                ref={backRef}
+                type="button"
+                className="pp-btn pp-btn--quiet"
+                onClick={() => setClosing(true)}
+              >
+                <Icon name="chevron-down" size={16} className="pp-rot90" />
+                Back to the board
+              </button>
+              <span className="pp-code">{restaurant.dimension}</span>
+            </div>
+          </div>
 
-        <div
-          className={`pp-modal-cover${bannerUrl ? " pp-has-img" : ""}`}
-          style={{ "--hue": restaurant.hue } as CSSProperties}
-        >
-          {bannerUrl ? (
-            <img className="pp-banner-img" src={bannerUrl} alt={restaurant.name} />
-          ) : (
-            <span className="pp-modal-emoji">
-              <Icon name="utensils" size={60} />
-            </span>
-          )}
-        </div>
-
-        <div className="pp-modal-body">
-          <h2 className="pp-modal-title">{restaurant.name}</h2>
-          <p className="pp-modal-tagline">{restaurant.tagline}</p>
-          <p className="pp-modal-meta">
-            <span className="pp-rating">
-              <Icon name="star" size={13} />
-              {restaurant.rating > 0 ? restaurant.rating.toFixed(1) : "New"}
-            </span>
-            <span className="pp-meta-item">
-              <Icon name="clock" size={13} />
-              {restaurant.time}
-            </span>
-            <span className="pp-meta-item">{restaurant.dimension}</span>
-            <span className="pp-meta-item pp-fee">
-              {restaurant.fee === 0
-                ? "Free portal"
-                : `${restaurant.fee}${CURRENCY} toll`}
-            </span>
-          </p>
-
-          <h3 className="pp-menu-heading">Menu</h3>
-          {restaurant.items.length === 0 && (
-            <p className="pp-hint">
-              This kitchen is restocking across dimensions — check back soon.
-            </p>
-          )}
-          <ul className="pp-menu">
-            {restaurant.items.map((item) => {
-              const qty = qtyOf(item);
-              const tileUrl = imageUrl(item.image);
-              return (
-                <li className="pp-menu-item" key={item.id}>
-                  {tileUrl ? (
-                    <button
-                      type="button"
-                      className="pp-item-tile pp-item-tile-btn"
-                      style={{ "--hue": restaurant.hue } as CSSProperties}
-                      onClick={() => setZoom(item)}
-                      aria-label={`View ${item.name} photo`}
-                    >
-                      <img
-                        className="pp-item-tile-img"
-                        src={tileUrl}
-                        alt=""
-                        loading="lazy"
-                      />
-                    </button>
-                  ) : (
-                    <span
-                      className="pp-item-tile"
-                      style={{ "--hue": restaurant.hue } as CSSProperties}
-                      aria-hidden="true"
-                    >
-                      <Icon name="utensils" size={22} />
-                    </span>
+          <div className="pp-shell pp-sheet__body">
+            <header className="pp-kitchen">
+              {bannerUrl ? (
+                <img
+                  className="pp-kitchen__art"
+                  src={bannerUrl}
+                  alt=""
+                  decoding="async"
+                />
+              ) : (
+                <div className="pp-kitchen__art-blank">
+                  <Icon name="utensils" size={40} />
+                </div>
+              )}
+              <div className="pp-kitchen__text">
+                <div className="pp-kitchen__tags">
+                  <span className="pp-tag">{restaurant.dimension}</span>
+                  {restaurant.promoted && (
+                    <span className="pp-tag pp-tag--note">Paid placement</span>
                   )}
-                  <span className="pp-item-info">
-                    <span className="pp-item-name">{item.name}</span>
-                    <span className="pp-item-desc">{item.desc}</span>
-                    {item.prepMinutes ? (
-                      <span className="pp-item-prep">
-                        <Icon name="clock" size={12} />~{item.prepMinutes} min prep
-                      </span>
-                    ) : null}
+                </div>
+                <h2 className="pp-kitchen__name">{restaurant.name}</h2>
+                <p className="pp-kitchen__tagline">{restaurant.tagline}</p>
+                <p className="pp-kitchen__meta">
+                  <span>
+                    <Icon name="star" size={14} />
+                    {restaurant.rating > 0
+                      ? `${restaurant.rating.toFixed(1)} rated`
+                      : "Unrated"}
                   </span>
-                  <span className="pp-item-buy">
-                    <span className="pp-item-price">
-                      {item.price}
-                      {CURRENCY}
-                    </span>
-                    {canOrder &&
-                      (qty === 0 ? (
-                        <button
-                          type="button"
-                          className="pp-btn pp-btn-primary pp-btn-sm"
-                          onClick={() => onAdd(restaurant, item)}
-                        >
-                          <Icon name="plus" size={14} />
-                          Add
-                        </button>
-                      ) : (
-                        <span className="pp-stepper">
+                  <span>
+                    <Icon name="clock" size={14} />
+                    {restaurant.time}
+                  </span>
+                  <span className={restaurant.fee === 0 ? "pp-is-free" : undefined}>
+                    {restaurant.fee === 0
+                      ? "No toll"
+                      : `${restaurant.fee}${CURRENCY} toll`}
+                  </span>
+                </p>
+              </div>
+            </header>
+
+            <section className="pp-section">
+              <div className="pp-section__head">
+                <h3>Available for transit</h3>
+                <span className="pp-code">
+                  {listed.length} item{listed.length === 1 ? "" : "s"} declared
+                </span>
+              </div>
+
+              {listed.length === 0 ? (
+                <div className="pp-state">
+                  <p className="pp-state__title">Between shipments</p>
+                  <p className="pp-state__body">
+                    This kitchen has nothing cleared for transit right now. Its
+                    licence is current; its shelves are not.
+                  </p>
+                </div>
+              ) : (
+                <ul className="pp-items">
+                  {listed.map((item) => {
+                    const qty = qtyOf(item);
+                    const tileUrl = imageUrl(item.image);
+                    return (
+                      <li className="pp-item" key={item.id}>
+                        {tileUrl ? (
                           <button
                             type="button"
-                            onClick={() =>
-                              onChangeQty(`${restaurant.id}:${item.id}`, -1)
-                            }
-                            aria-label={`Remove one ${item.name}`}
+                            className="pp-item__thumb"
+                            onClick={() => setZoom(item)}
+                            aria-label={`Enlarge the photo of ${item.name}`}
                           >
-                            <Icon name="minus" size={14} />
+                            <img src={tileUrl} alt="" loading="lazy" />
                           </button>
-                          <span aria-live="polite">{qty}</span>
-                          <button
-                            type="button"
-                            onClick={() => onAdd(restaurant, item)}
-                            aria-label={`Add one more ${item.name}`}
-                          >
-                            <Icon name="plus" size={14} />
-                          </button>
+                        ) : (
+                          <span className="pp-item__thumb" aria-hidden="true">
+                            <Icon name="utensils" size={22} />
+                          </span>
+                        )}
+
+                        <span className="pp-item__info">
+                          <span className="pp-item__name">{item.name}</span>
+                          <span className="pp-item__desc">{item.desc}</span>
+                          {item.prepMinutes ? (
+                            <span className="pp-item__prep">
+                              <Icon name="clock" size={12} />~{item.prepMinutes} min
+                              prep
+                            </span>
+                          ) : null}
                         </span>
-                      ))}
-                  </span>
-                </li>
-              );
-            })}
-          </ul>
 
-          {!canOrder && (
-            <p className="pp-owner-note">
-              You're signed in as a store owner — ordering is disabled.
-            </p>
-          )}
+                        <span className="pp-item__buy">
+                          <span className="pp-item__price">
+                            {item.price}
+                            {CURRENCY}
+                          </span>
+                          {canOrder &&
+                            (qty === 0 ? (
+                              <button
+                                type="button"
+                                className="pp-btn"
+                                onClick={() => onAdd(restaurant, item)}
+                                aria-label={`Add ${item.name} to the manifest`}
+                              >
+                                <Icon name="plus" size={14} />
+                                Add
+                              </button>
+                            ) : (
+                              <span className="pp-stepper">
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    onChangeQty(`${restaurant.id}:${item.id}`, -1)
+                                  }
+                                  aria-label={
+                                    qty === 1
+                                      ? `Remove ${item.name} from the manifest`
+                                      : `One fewer ${item.name}`
+                                  }
+                                >
+                                  <Icon
+                                    name={qty === 1 ? "trash" : "minus"}
+                                    size={14}
+                                  />
+                                </button>
+                                <span aria-live="polite">{qty}</span>
+                                <button
+                                  type="button"
+                                  onClick={() => onAdd(restaurant, item)}
+                                  aria-label={`One more ${item.name}`}
+                                >
+                                  <Icon name="plus" size={14} />
+                                </button>
+                              </span>
+                            ))}
+                        </span>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
 
-          {canOrder && inCartHere > 0 && (
-            <button
-              type="button"
-              className="pp-btn pp-btn-primary pp-btn-block"
-              onClick={onOpenCart}
-            >
-              <Icon name="cart" size={16} />
-              View cart · {inCartHere} item{inCartHere === 1 ? "" : "s"} from here
-            </button>
-          )}
+              <p className="pp-note pp-section__note">
+                <Icon name="alert" size={16} />
+                Allergen information is accurate in the dimension of origin only.
+                Dishes may arrive having been a different dish for part of the
+                journey.
+              </p>
 
-          {reviews && (
-            <section className="pp-cust-reviews">
-              <h3 className="pp-menu-heading">Reviews</h3>
+              {!canOrder && (
+                <p className="pp-note pp-section__note">
+                  <Icon name="alert" size={16} />
+                  You are signed in as a kitchen. Carriers may not order freight
+                  from themselves.
+                </p>
+              )}
+            </section>
 
-              {user?.role === "customer" ? (
+            <section className="pp-section">
+              <div className="pp-section__head">
+                <h3>Filed reports</h3>
+                <span className="pp-code">
+                  {reviews ? `${reviews.length} on record` : "Retrieving…"}
+                </span>
+              </div>
+
+              {user?.role === "customer" && (
                 <ReviewForm
                   restaurantId={restaurant.id}
                   onSubmitted={async () => {
@@ -327,32 +391,26 @@ export default function RestaurantModal({
                     onReviewAdded();
                   }}
                 />
-              ) : !user ? (
-                <p className="pp-review-signin">
-                  Sign in as a customer to leave a review.
-                </p>
-              ) : null}
+              )}
 
-              {reviews.length === 0 ? (
-                <p className="pp-review-empty">No reviews yet — be the first!</p>
-              ) : (
-                <ul className="pp-cust-review-list">
+              {reviews && reviews.length > 0 && (
+                <ul className="pp-reviews pp-section__note">
                   {reviews.map((r) => (
-                    <li className="pp-cust-review" key={r.id}>
-                      <div className="pp-cust-review-head">
-                        <span className="pp-review-author">
-                          <span className="pp-review-avatar" aria-hidden="true">
+                    <li className="pp-review" key={r.id}>
+                      <div className="pp-review__head">
+                        <span className="pp-review__author">
+                          <span className="pp-review__avatar" aria-hidden="true">
                             <Icon name="user" size={15} />
                           </span>
                           {r.author}
                         </span>
                         <Stars rating={r.rating} />
                       </div>
-                      <p className="pp-cust-review-body">{r.body}</p>
+                      <p className="pp-review__body">{r.body}</p>
                       {r.reply && (
-                        <div className="pp-cust-review-reply">
-                          <span className="pp-review-reply-label">
-                            {restaurant.name} replied
+                        <div className="pp-review__reply">
+                          <span className="pp-review__reply-label">
+                            {restaurant.name} responded
                           </span>
                           <p>{r.reply}</p>
                         </div>
@@ -361,18 +419,44 @@ export default function RestaurantModal({
                   ))}
                 </ul>
               )}
+
+              {/* One grey line, not two stacked. Whether the list is empty and
+                  whether you may file are separate facts, but the reader only
+                  needs whichever one is actually blocking them. */}
+              {reviews && (reviews.length === 0 || !user) && (
+                <p className="pp-fine pp-section__note">
+                  {reviews.length === 0
+                    ? "Nothing on record. Either it is fine, or nobody came back."
+                    : "Only account holders who have taken delivery may file a report."}
+                  {!user && reviews.length === 0
+                    ? " Sign in to be the first."
+                    : null}
+                </p>
+              )}
             </section>
+          </div>
+
+          {canOrder && inCartHere > 0 && (
+            <div className="pp-sheet__foot">
+              <div className="pp-shell pp-sheet__foot-inner">
+                <span className="pp-sheet__foot-count">
+                  <strong>{inCartHere}</strong> item
+                  {inCartHere === 1 ? "" : "s"} from this kitchen on your manifest
+                </span>
+                <button type="button" className="pp-btn pp-btn--go" onClick={onOpenCart}>
+                  <Icon name="cart" size={16} />
+                  Review the manifest
+                </button>
+              </div>
+            </div>
           )}
         </div>
       </div>
 
       {zoom && zoomUrl && (
         <div
-          className="pp-lightbox-backdrop"
-          onClick={(e) => {
-            e.stopPropagation();
-            setZoom(null);
-          }}
+          className="pp-backdrop pp-backdrop--center"
+          onClick={() => setZoom(null)}
         >
           <div
             className="pp-lightbox"
@@ -385,36 +469,36 @@ export default function RestaurantModal({
               type="button"
               className="pp-iconbtn pp-close"
               onClick={() => setZoom(null)}
-              aria-label="Close photo"
+              aria-label="Close the photo"
             >
               <Icon name="close" size={18} />
             </button>
-            <img className="pp-lightbox-img" src={zoomUrl} alt={zoom.name} />
-            <div className="pp-lightbox-body">
-              <div className="pp-lightbox-head">
+            <img src={zoomUrl} alt={zoom.name} />
+            <div className="pp-lightbox__body">
+              <div className="pp-lightbox__head">
                 <h3>{zoom.name}</h3>
-                <span className="pp-item-price">
+                <span className="pp-item__price">
                   {zoom.price}
                   {CURRENCY}
                 </span>
               </div>
-              <p className="pp-lightbox-desc">{zoom.desc}</p>
+              <p className="pp-item__desc">{zoom.desc}</p>
               {zoom.prepMinutes ? (
-                <span className="pp-item-prep">
+                <span className="pp-item__prep">
                   <Icon name="clock" size={12} />~{zoom.prepMinutes} min prep
                 </span>
               ) : null}
               {canOrder && (
                 <button
                   type="button"
-                  className="pp-btn pp-btn-primary pp-btn-block"
+                  className="pp-btn pp-btn--block"
                   onClick={() => {
                     onAdd(restaurant, zoom);
                     setZoom(null);
                   }}
                 >
                   <Icon name="plus" size={15} />
-                  Add to cart · {zoom.price}
+                  Add · {zoom.price}
                   {CURRENCY}
                 </button>
               )}

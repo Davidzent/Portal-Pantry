@@ -4,18 +4,19 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/portal.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Portal Pantry — Interdimensional Food Delivery</title>
+    <title>Portal Pantry — licensed interdimensional freight</title>
     <meta
       name="description"
-      content="Portal Pantry delivers hot meals through cold wormholes from the multiverse's weirdest kitchens. Any craving, any universe, ~20 minutes (your local causality)."
+      content="Portal Pantry is a bonded carrier moving hot meals through cold wormholes. Any craving, any universe, roughly twenty minutes — your local causality."
     />
-    <meta name="theme-color" content="#140c22" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;500;600;700&family=Titan+One&display=swap"
-      rel="stylesheet"
-    />
+    <!-- Matches --pp-bg in src/app/styles/tokens.css. -->
+    <meta name="theme-color" content="#0d1112" />
+
+    <!-- Fonts are self-hosted, subset and fingerprinted by Vite from
+         src/app/fonts (see scripts/build-fonts.sh) — no third-party request to
+         preconnect to, and no preload here because the built filenames are
+         hashed. Zero CLS comes from the metric-matched fallback @font-face
+         rules in src/app/styles/fonts.css, not from preloading. -->
   </head>
   <body>
     <div id="root"></div>

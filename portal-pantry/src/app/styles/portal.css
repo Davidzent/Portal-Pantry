@@ -1,0 +1,123 @@
+/* ==========================================================================
+   The portal — the signature. One shape, three states.
+
+   Rules it lives by:
+     · it only appears on something that transports, transacts or confirms
+     · it animates transform / opacity only
+     · reduced motion freezes it rather than hiding it
+   ========================================================================== */
+
+.pp-portal {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  line-height: 0;
+}
+
+.pp-portal svg {
+  overflow: visible;
+}
+
+.pp-portal__mouth {
+  stroke: var(--pp-line-2);
+}
+
+.pp-portal__lip {
+  stroke: var(--pp-line-2);
+}
+
+/* --- closed: nothing is moving, so nothing is green ----------------------
+   The rationing rule, made literal: an empty manifest does not transact, so
+   it does not get the colour. */
+
+.pp-portal.is-closed .pp-portal__mouth {
+  fill: var(--pp-well);
+}
+
+.pp-portal.is-closed .pp-portal__arc {
+  display: none;
+}
+
+/* --- charging: the loading state -----------------------------------------
+   A portal spinning up, not a spinner. */
+
+.pp-portal.is-charging .pp-portal__mouth {
+  fill: var(--pp-well);
+  transform-origin: 50% 50%;
+  animation: pp-portal-breathe 1600ms var(--pp-ease) infinite;
+}
+
+.pp-portal.is-charging .pp-portal__arc {
+  stroke: var(--pp-portal-text);
+  stroke-dasharray: 26 74;
+  transform-origin: 50% 50%;
+  animation: pp-portal-sweep 1100ms linear infinite;
+}
+
+@keyframes pp-portal-sweep {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes pp-portal-breathe {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(0.985);
+  }
+}
+
+/* --- open: something is going through. The one green appearance. --------- */
+
+.pp-portal.is-open .pp-portal__mouth {
+  fill: var(--pp-portal);
+  stroke: transparent;
+}
+
+.pp-portal.is-open .pp-portal__lip {
+  stroke: var(--pp-portal-ink);
+  opacity: 0.35;
+}
+
+.pp-portal.is-open .pp-portal__arc {
+  display: none;
+}
+
+/* One-shot opening animation, opt-in via `animateIn`. Reserved for the payoff
+   moment so it does not fire on every card that mounts. */
+.pp-portal--enter .pp-portal__mouth {
+  transform-origin: 50% 50%;
+  animation: pp-portal-open var(--pp-portal-dur) var(--pp-ease-out) both;
+}
+
+@keyframes pp-portal-open {
+  from {
+    transform: scale(0.2) rotate(-8deg);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+}
+
+/* --- reduced motion ------------------------------------------------------
+   Nothing moves. The portal is simply in its state, which is legible on its
+   own, and `charging` keeps a visible partial arc so "busy" still reads. */
+
+@media (prefers-reduced-motion: reduce) {
+  .pp-portal .pp-portal__mouth,
+  .pp-portal .pp-portal__arc {
+    animation: none !important;
+    transform: none !important;
+  }
+
+  .pp-portal.is-charging .pp-portal__arc {
+    display: block;
+    stroke-dasharray: 26 74;
+    stroke-dashoffset: 0;
+  }
+}

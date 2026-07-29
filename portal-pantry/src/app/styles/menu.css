@@ -1,0 +1,580 @@
+/* ==========================================================================
+   Restaurant / menu — and the portal transition.
+
+   The menu is not a modal box on top of the board; it is a place you arrive
+   at. It fills the viewport and wipes in from the exact point you clicked,
+   so the card visibly opens *through* something rather than expanding.
+
+   The transition is a `clip-path: circle()` whose origin is the clicked card,
+   plus a green ring flare at the same point. The sheet content only ever
+   moves by transform/opacity. See DESIGN-NOTES.md for why this is a plain CSS
+   reveal rather than the View Transition API.
+   ========================================================================== */
+
+/* `--pp-ox` / `--pp-oy` are the clicked card's centre in viewport pixels —
+   geometry, not style, and the only thing the component sets inline.
+
+   The defaults live HERE, on the same element the inline style targets, so the
+   inline value wins. Declaring them on `.pp-sheet` instead would shadow the
+   inherited value and every portal would open from the middle of the screen. */
+.pp-sheet-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  overflow: hidden;
+  --pp-ox: 50vw;
+  --pp-oy: 50vh;
+}
+
+.pp-sheet {
+  position: absolute;
+  inset: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: var(--pp-bg);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .pp-sheet {
+    animation: pp-portal-open-clip var(--pp-portal-dur) var(--pp-ease-portal) both;
+  }
+
+  .pp-sheet.is-closing {
+    animation: pp-portal-open-clip 300ms var(--pp-ease-portal) reverse both;
+  }
+
+  /* Percentages on both ends so the clip actually interpolates. */
+  @keyframes pp-portal-open-clip {
+    from {
+      clip-path: circle(0% at var(--pp-ox) var(--pp-oy));
+    }
+    to {
+      clip-path: circle(150% at var(--pp-ox) var(--pp-oy));
+    }
+  }
+
+  /* Content arrives a beat behind the opening, and only on transform/opacity. */
+  .pp-sheet__inner {
+    animation: pp-sheet-settle 420ms 90ms var(--pp-ease-out) both;
+  }
+
+  @keyframes pp-sheet-settle {
+    from {
+      opacity: 0;
+      transform: scale(0.985) translateY(12px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+}
+
+/* The green moment: a ring pushed out from the origin as the portal opens.
+   transform + opacity only, removed from the tree as soon as it finishes. */
+.pp-flare {
+  position: absolute;
+  left: var(--pp-ox);
+  top: var(--pp-oy);
+  width: 120px;
+  height: 120px;
+  margin: -60px 0 0 -60px;
+  border-radius: 50%;
+  border: 2px solid var(--pp-portal);
+  pointer-events: none;
+  opacity: 0;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .pp-flare {
+    animation: pp-flare var(--pp-portal-dur) var(--pp-ease-portal) both;
+  }
+
+  @keyframes pp-flare {
+    from {
+      opacity: 0.9;
+      transform: scale(0.15);
+    }
+    to {
+      opacity: 0;
+      transform: scale(9);
+    }
+  }
+}
+
+/* ---- Sheet chrome ------------------------------------------------------- */
+
+.pp-sheet__bar {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: var(--pp-s-3);
+  padding: var(--pp-s-3) 0;
+  /* Solid, not translucent. This bar sits over a dense scrolling list rather
+     than over the page background, and at 88% opacity the headings underneath
+     ghosted straight through it. Legibility beats the glass. */
+  background: var(--pp-bg);
+  border-bottom: 1px solid var(--pp-line);
+}
+
+.pp-sheet__bar .pp-shell {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--pp-s-3);
+}
+
+.pp-sheet__inner {
+  padding-bottom: var(--pp-s-9);
+}
+
+/* A sheet whose content is already sized to the viewport (the checkout
+   sequence) must not carry the scroll padding, or it gains a scrollbar and
+   the "centred" content sits 48px above where it should. */
+.pp-sheet__inner--full {
+  padding-bottom: 0;
+}
+
+.pp-sheet__body {
+  max-width: 860px;
+  margin-inline: auto;
+}
+
+/* ---- Kitchen header ----------------------------------------------------- */
+
+.pp-kitchen {
+  position: relative;
+  margin-top: var(--pp-s-5);
+  border-radius: var(--pp-r-xl);
+  overflow: hidden;
+  background: var(--pp-well);
+  border: 1px solid var(--pp-line);
+}
+
+.pp-kitchen__art {
+  aspect-ratio: 21 / 9;
+  width: 100%;
+  object-fit: cover;
+}
+
+.pp-kitchen__art-blank {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 21 / 9;
+  color: var(--pp-text-3);
+}
+
+/* Scrim so the title sits on the art at full contrast whatever the art does. */
+.pp-kitchen::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to top,
+    rgb(10 14 15 / 0.96) 0%,
+    rgb(10 14 15 / 0.75) 34%,
+    rgb(10 14 15 / 0.15) 68%,
+    transparent 100%
+  );
+  pointer-events: none;
+}
+
+.pp-kitchen__text {
+  position: absolute;
+  z-index: 1;
+  inset: auto 0 0 0;
+  display: grid;
+  gap: var(--pp-s-3);
+  padding: var(--pp-s-5);
+}
+
+.pp-kitchen__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--pp-s-2);
+}
+
+.pp-kitchen__name {
+  font-size: var(--pp-t-40);
+  letter-spacing: -0.025em;
+}
+
+.pp-kitchen__tagline {
+  max-width: 52ch;
+  color: var(--pp-text-2);
+}
+
+.pp-kitchen__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--pp-s-2) var(--pp-s-5);
+  font-family: var(--pp-utility);
+  font-size: var(--pp-t-13);
+  color: var(--pp-text-2);
+}
+
+.pp-kitchen__meta span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pp-kitchen__meta .pp-is-free {
+  color: var(--pp-portal-text);
+}
+
+/* ---- Section headings --------------------------------------------------- */
+
+.pp-section {
+  margin-top: var(--pp-s-7);
+}
+
+.pp-section__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--pp-s-2);
+  margin-bottom: var(--pp-s-4);
+}
+
+.pp-section__head h3 {
+  font-size: var(--pp-t-24);
+  letter-spacing: -0.02em;
+}
+
+/* Anything that follows the main block of a section. */
+.pp-section__note {
+  margin-top: var(--pp-s-4);
+}
+
+/* The back control reuses the chevron rather than adding a ninth icon. */
+.pp-rot90 {
+  rotate: 90deg;
+}
+
+/* ---- Menu items --------------------------------------------------------- */
+
+.pp-items {
+  display: grid;
+  gap: var(--pp-s-3);
+}
+
+.pp-item {
+  display: grid;
+  grid-template-columns: 88px minmax(0, 1fr) auto;
+  gap: var(--pp-s-4);
+  align-items: center;
+  padding: var(--pp-s-3);
+  background: var(--pp-surface);
+  border: 1px solid var(--pp-line);
+  border-radius: var(--pp-r-lg);
+  transition:
+    background var(--pp-fast) var(--pp-ease),
+    border-color var(--pp-fast) var(--pp-ease);
+}
+
+.pp-item:hover {
+  background: var(--pp-surface-2);
+  border-color: var(--pp-line-2);
+}
+
+.pp-item__thumb {
+  width: 88px;
+  height: 88px;
+  padding: 0;
+  border: 1px solid var(--pp-line);
+  border-radius: var(--pp-r);
+  background: var(--pp-well);
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  color: var(--pp-text-3);
+}
+
+button.pp-item__thumb {
+  cursor: zoom-in;
+}
+
+.pp-item__thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.pp-item__info {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+}
+
+.pp-item__name {
+  font-size: var(--pp-t-16);
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.pp-item__desc {
+  font-size: var(--pp-t-14);
+  line-height: 1.5;
+  color: var(--pp-text-2);
+}
+
+.pp-item__prep {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--pp-utility);
+  font-size: var(--pp-t-12);
+  color: var(--pp-text-3);
+}
+
+.pp-item__buy {
+  display: grid;
+  justify-items: end;
+  gap: var(--pp-s-2);
+}
+
+.pp-item__price {
+  font-family: var(--pp-utility);
+  font-size: var(--pp-t-15);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---- Reviews ------------------------------------------------------------ */
+
+.pp-reviews {
+  display: grid;
+  gap: var(--pp-s-3);
+}
+
+.pp-review {
+  padding: var(--pp-s-4);
+  background: var(--pp-surface);
+  border: 1px solid var(--pp-line);
+  border-radius: var(--pp-r-lg);
+}
+
+.pp-review__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--pp-s-2);
+  margin-bottom: var(--pp-s-2);
+}
+
+.pp-review__author {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--pp-s-2);
+  font-size: var(--pp-t-14);
+  font-weight: 600;
+}
+
+.pp-review__avatar {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--pp-surface-3);
+  color: var(--pp-text-3);
+}
+
+.pp-review__body {
+  color: var(--pp-text-2);
+  font-size: var(--pp-t-15);
+}
+
+.pp-review__reply {
+  margin-top: var(--pp-s-3);
+  padding: var(--pp-s-3);
+  border-left: 2px solid var(--pp-teal);
+  background: var(--pp-well);
+  border-radius: 0 var(--pp-r) var(--pp-r) 0;
+}
+
+.pp-review__reply-label {
+  display: block;
+  margin-bottom: 2px;
+  font-family: var(--pp-utility);
+  font-size: var(--pp-t-12);
+  letter-spacing: 0.04em;
+  color: var(--pp-teal);
+}
+
+.pp-review__reply p {
+  font-size: var(--pp-t-14);
+  color: var(--pp-text-2);
+}
+
+/* ---- Review form -------------------------------------------------------- */
+
+.pp-review-form {
+  display: grid;
+  gap: var(--pp-s-3);
+  padding: var(--pp-s-4);
+  background: var(--pp-surface);
+  border: 1px solid var(--pp-line);
+  border-radius: var(--pp-r-lg);
+}
+
+.pp-stars-pick {
+  display: flex;
+  gap: var(--pp-s-1);
+}
+
+.pp-star-btn {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--pp-r-sm);
+  background: none;
+  color: var(--pp-line-2);
+  cursor: pointer;
+  transition: color var(--pp-fast) var(--pp-ease);
+}
+
+.pp-star-btn.is-on {
+  color: var(--pp-yolk);
+}
+
+.pp-review-input {
+  width: 100%;
+  min-height: 88px;
+  padding: var(--pp-s-3);
+  background: var(--pp-well);
+  border: 1px solid var(--pp-line);
+  border-radius: var(--pp-r);
+  color: var(--pp-text);
+  font-family: var(--pp-body);
+  font-size: var(--pp-t-15);
+  resize: vertical;
+}
+
+.pp-review-input::placeholder {
+  color: var(--pp-text-3);
+}
+
+.pp-review-form__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--pp-s-3);
+}
+
+/* ---- Sticky "added from here" bar --------------------------------------- */
+
+.pp-sheet__foot {
+  position: sticky;
+  bottom: 0;
+  z-index: 3;
+  margin-top: var(--pp-s-6);
+  padding: var(--pp-s-3) 0 var(--pp-s-4);
+  background: var(--pp-bg);
+  border-top: 1px solid var(--pp-line);
+}
+
+.pp-sheet__foot-inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--pp-s-3);
+  max-width: 860px;
+  margin-inline: auto;
+}
+
+.pp-sheet__foot-count {
+  font-size: var(--pp-t-14);
+  color: var(--pp-text-2);
+}
+
+.pp-sheet__foot-count strong {
+  color: var(--pp-text);
+}
+
+/* ---- Photo lightbox ----------------------------------------------------- */
+
+.pp-lightbox {
+  width: min(560px, 100%);
+  margin: auto;
+  background: var(--pp-surface);
+  border: 1px solid var(--pp-line-2);
+  border-radius: var(--pp-r-xl);
+  overflow: hidden;
+  box-shadow: var(--pp-e3);
+  position: relative;
+}
+
+.pp-lightbox img {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+}
+
+.pp-lightbox__body {
+  display: grid;
+  gap: var(--pp-s-3);
+  padding: var(--pp-s-5);
+}
+
+.pp-lightbox__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--pp-s-3);
+}
+
+.pp-lightbox__head h3 {
+  font-size: var(--pp-t-20);
+  letter-spacing: -0.02em;
+}
+
+/* ---- Narrow ------------------------------------------------------------- */
+
+@media (max-width: 620px) {
+  .pp-item {
+    grid-template-columns: 64px minmax(0, 1fr);
+    grid-template-areas:
+      "thumb info"
+      "buy   buy";
+    gap: var(--pp-s-3);
+  }
+
+  .pp-item__thumb {
+    grid-area: thumb;
+    width: 64px;
+    height: 64px;
+  }
+
+  .pp-item__info {
+    grid-area: info;
+  }
+
+  .pp-item__buy {
+    grid-area: buy;
+    grid-auto-flow: column;
+    justify-items: stretch;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: var(--pp-s-2);
+    border-top: 1px solid var(--pp-line);
+  }
+
+  .pp-kitchen__art,
+  .pp-kitchen__art-blank {
+    aspect-ratio: 3 / 2;
+  }
+
+  .pp-kitchen__text {
+    padding: var(--pp-s-4);
+  }
+}
